@@ -1,160 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIX MINUTES // Operational Framework</title>
- </head>
+    <title>47-&-SIX // Culinary Architecture</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
 <body>
-
-    <div class="wrapper">
-        <sidebar>
-            <div>
-                <div class="brand">SIX MINUTES // OS</div>
-                <nav class="nav-menu">
-                    <button class="nav-item active" onclick="switchView('hub-view', this)">[00] MONITOR MATRIX</button>
-                    <button class="nav-item storefront-nav" onclick="switchView('storefront-view', this)">[01] 47-&-SIX</button>
-                    <button class="nav-item" onclick="switchView('ronin-view', this)">[02] 47 RONIN</button>
-                    <button class="nav-item disabled">[03] SUSTASIS</button>
-                    <button class="nav-item disabled">[04] TENSILE</button>
-                    <button class="nav-item disabled" style="color:#22222a;">[05] RESERVED</button>
-                    <button class="nav-item disabled" style="color:#22222a;">[06] RESERVED</button>
-                </nav>
-            </div>
-            
-            <div class="interval-clock">
-                <div class="timer-label">Active Cadence Interval</div>
-                <div class="timer-digits" id="cadence-clock">06:00</div>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
-                AUTHENTICATED PROTOCOL // 0.01% HANDSHAKE
-            </div>
-        </sidebar>
-
-        <div class="main-content">
-            
-            <div id="hub-view" class="view-panel active-view">
-                <div class="header-panel">
-                    <h1>SYSTEM MONITOR MATRIX</h1>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Parallel Execution Clusters Matrix</p>
-                </div>
-
-                <div class="agent-grid">
-                    <div class="agent-card active" style="border-color: rgba(255, 69, 0, 0.3);">
-                        <div class="agent-status" style="background: rgba(255, 69, 0, 0.1); color: var(--interval-orange); border: 1px solid rgba(255, 69, 0, 0.2);">Deploying</div>
-                        <div class="agent-name">47-&-SIX</div>
-                        <div class="agent-task">The operational storefront. Real-time scheduling, order metrics, and interval deployment.</div>
-                        <div class="log-output" id="hub-log-storefront" style="color: #ffaa66;">> System armed. Monitoring active production lines...</div>
-                    </div>
-
-                    <div class="agent-card active">
-                        <div class="agent-status status-online">Data Sweep</div>
-                        <div class="agent-name">47 RONIN</div>
-                        <div class="agent-task">Parallel Cluster verification & high-velocity target data acquisition.</div>
-                        <div class="log-output" id="hub-log-ronin">> Verification successful. Cluster operational...</div>
-                    </div>
-
-                    <div class="agent-card active">
-                        <div class="agent-status status-online">Indexing</div>
-                        <div class="agent-name">SUSTASIS</div>
-                        <div class="agent-task">Vector memory layer utilizing semantic quantization and HNSW lookups.</div>
-                        <div class="log-output" id="hub-log-sustasis">> Memory space quantized. Index map stable...</div>
-                    </div>
-
-                    <div class="agent-card active">
-                        <div class="agent-status status-online">Listening</div>
-                        <div class="agent-name">TENSILE PROTOCOL</div>
-                        <div class="agent-task">Human-to-Machine high-precision translation layer.</div>
-                        <div class="log-output" id="hub-log-tensile">> Translating baseline instructions... 100% precision.</div>
-                    </div>
-
-                    <div class="agent-card" style="border-color: var(--border); opacity: 0.4;">
-                        <div class="agent-status status-locked">Locked</div>
-                        <div class="agent-name" style="color: var(--text-muted);">[PROTOCOL_05]</div>
-                        <div class="agent-task">Awaiting downstream system architecture allocation...</div>
-                        <div class="log-output" style="background:#000; border-color:#1a1a22; height:110px;"></div>
-                    </div>
-
-                    <div class="agent-card" style="border-color: var(--border); opacity: 0.4;">
-                        <div class="agent-status status-locked">Locked</div>
-                        <div class="agent-name" style="color: var(--text-muted);">[PROTOCOL_06]</div>
-                        <div class="agent-task">Awaiting downstream system architecture allocation...</div>
-                        <div class="log-output" style="background:#000; border-color:#1a1a22; height:110px;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="storefront-view" class="view-panel">
-                <div class="header-panel">
-                    <h1>47-&-SIX // INTERACTIVE EXECUTIVE DECK</h1>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Operational Storefront & Interval Deployment Console</p>
-                </div>
-
-                <div class="storefront-layout">
-                    <div class="control-box">
-                        <div class="box-title">ACTIVE PRODUCTION LINE STATUS</div>
-                        <div class="menu-list">
-                            <div class="menu-item">
-                                <div>
-                                    <strong style="color: var(--interval-orange);">INTERVAL CONFIG: CATERING ENGINE</strong>
-                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Automated plates routing matching the 6-minute window grid.</p>
-                                </div>
-                                <button class="btn-deploy" onclick="triggerManualDeployment('[CATERING_ENGINE]')">DEPLOY ORDER</button>
-                            </div>
-                            <div class="menu-item">
-                                <div>
-                                    <strong style="color: var(--text-main);">DIGITAL METRIC: PIPELINE AUDIT</strong>
-                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Audit log tracking execution efficiency and cadence drift thresholds.</p>
-                                </div>
-                                <button class="btn-deploy" style="background:var(--border-focus);" onclick="triggerManualDeployment('[PIPELINE_AUDIT]')">RUN AUDIT</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="control-box" style="display: flex; flex-direction: column; justify-content: space-between;">
-                        <div>
-                            <div class="box-title">DEPLOYMENT FEEDBACK</div>
-                            <div id="storefront-console-output" style="font-family:monospace; font-size:0.8rem; color:#ffaa66; background:#050507; border:1px solid var(--border); padding:15px; height:200px; overflow-y:auto; border-radius:6px;">
-                                [SYSTEM] Standing by for manual deployment signal...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="ronin-view" class="view-panel">
-                <div class="header-panel">
-                    <h1>47 RONIN // ACQUISITION CLUSTER MATRIX</h1>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Parallel Specialist Threads & Target Verification Telemetry</p>
-                </div>
-
-                <div class="storefront-layout" style="grid-template-columns: 1fr;">
-                    <div class="control-box">
-                        <div class="box-title">ACTIVE ACQUISITION THREADS</div>
-                        <div class="menu-list" id="ronin-thread-container">
-                            <div class="menu-item" style="border-left: 3px solid var(--accent);">
-                                <div>
-                                    <strong style="font-family: monospace;">RONIN_01 // TARGET_CLUSTER_ALPHA</strong>
-                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Scanning data structures for quantization parameters.</p>
-                                </div>
-                                <div style="font-family: monospace; color: var(--accent); font-size: 0.9rem;" id="ronin-t1-status">SWEEPING // 74%</div>
-                            </div>
-                            <div class="menu-item" style="border-left: 3px solid var(--accent);">
-                                <div>
-                                    <strong style="font-family: monospace;">RONIN_02 // TARGET_CLUSTER_BETA</strong>
-                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Verifying handshake layers and extraction boundaries.</p>
-                                </div>
-                                <div style="font-family: monospace; color: var(--accent); font-size: 0.9rem;" id="ronin-t2-status">VERIFYING // 41%</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+    <nav class="navbar">
+        <div class="brand">47-&-SIX</div>
+        <div class="nav-links">
+            <a href="#hero">[00] OVERVIEW</a>
+            <a href="#foundations">[01] FOUNDATIONS</a>
+            <a href="#sourcing">[02] MENU MATRIX</a>
+            <a href="#metrics">[03] ECONOMICS</a>
+            <a href="#concierge">[04] CONCIERGE</a>
         </div>
-    </div>
+    </nav>
+
+    <section id="hero" class="hero-section">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1>PRECISION CULINARY OPERATIONS</h1>
+            <div class="hero-subtext">30 Years of Mastery. 6-Minute Execution.</div>
+            <div class="status-badge">STATUS: ONLINE // ACCEPTING COMMISSIONS</div>
+        </div>
+    </section>
+
+    <section id="foundations" class="content-section">
+        <h2>01 // FOUNDATIONS & DISCIPLINE</h2>
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-tag">CU101</div>
+                <h3>Core Architecture</h3>
+                <p>Classical foundations translated into high-velocity production. Technique is the bedrock of efficiency, stripping away operational fluff to leave only precision execution.</p>
+            </div>
+            <div class="card">
+                <div class="card-tag">CU122</div>
+                <h3>Precision Patisserie</h3>
+                <p>Baking demands exact chemical constraints. We apply this strict, zero-tolerance approach to every layer of the 47-&-SIX kitchen.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="sourcing" class="content-section">
+        <h2>02 // SOURCING & MENU MATRIX</h2>
+        <div class="grid-3">
+            <div class="card">
+                <div class="card-tag">CU222</div>
+                <h3>Farm to Table</h3>
+                <p>Hyper-local supply chain integration. Direct sourcing optimizes flavor profiles and protects operational margins.</p>
+            </div>
+            <div class="card">
+                <div class="card-tag">CU132</div>
+                <h3>World Cuisines</h3>
+                <p>Global flavor profiles engineered for modular deployment across catering and elite personal chef formats.</p>
+            </div>
+            <div class="card">
+                <div class="card-tag">CE187</div>
+                <h3>Menu Management</h3>
+                <p>Menus built as scalable algorithms, maximizing profitability while seamlessly adapting to client dietary specifications.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="metrics" class="content-section">
+        <h2>03 // THE SIX-MINUTE ECONOMY</h2>
+        <div class="card terminal-card">
+            <div class="card-tag">CE167</div>
+            <h3>Cost Control & Purchasing Engine</h3>
+            <p>The 6-Minute Clock Cycle is our financial heartbeat. By locking production into rigid intervals, we eliminate operational drift, optimize purchasing yields, and maintain aggressive food cost controls. This is how quality scales without bleeding margin.</p>
+            <div class="progress-container">
+                <div class="progress-label">OPERATIONAL EFFICIENCY RATING</div>
+                <div class="progress-bar-bg"><div class="progress-bar" id="efficiency-bar"></div></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="concierge" class="content-section">
+        <h2>04 // AI CONCIERGE LAYER</h2>
+        <p><strong>CE160: Culinary Entrepreneurship</strong> deployment. Interface with the 47-&-SIX automated booking and routing system.</p>
+        <div class="chat-interface">
+            <div class="chat-log" id="chat-log">
+                <div class="bot-message">> System initialized. 0.01% Handshake verified.</div>
+                <div class="bot-message">> 47-&-SIX Concierge online. How can I route your service inquiry today?</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Enter parameters (e.g., 'Catering', 'Menu', 'Contact')...">
+                <button id="send-btn" onclick="transmitMessage()">TRANSMIT</button>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="brand">47-&-SIX</div>
+            <p>EL PASO, TX // REGIONAL OPERATIONAL RADIUS ACTIVE</p>
+            <p class="small-text">AUTHENTICATED PROTOCOL // 0.01% HANDSHAKE</p>
+        </div>
+    </footer>
 </body>
 </html>
-   
