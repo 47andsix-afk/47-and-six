@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIX MINUTES // Operational Framework</title>
+ </head>
+<body>
+
+    <div class="wrapper">
+        <sidebar>
+            <div>
+                <div class="brand">SIX MINUTES // OS</div>
+                <nav class="nav-menu">
+                    <button class="nav-item active" onclick="switchView('hub-view', this)">[00] MONITOR MATRIX</button>
+                    <button class="nav-item storefront-nav" onclick="switchView('storefront-view', this)">[01] 47-&-SIX</button>
+                    <button class="nav-item" onclick="switchView('ronin-view', this)">[02] 47 RONIN</button>
+                    <button class="nav-item disabled">[03] SUSTASIS</button>
+                    <button class="nav-item disabled">[04] TENSILE</button>
+                    <button class="nav-item disabled" style="color:#22222a;">[05] RESERVED</button>
+                    <button class="nav-item disabled" style="color:#22222a;">[06] RESERVED</button>
+                </nav>
+            </div>
+            
+            <div class="interval-clock">
+                <div class="timer-label">Active Cadence Interval</div>
+                <div class="timer-digits" id="cadence-clock">06:00</div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">
+                AUTHENTICATED PROTOCOL // 0.01% HANDSHAKE
+            </div>
+        </sidebar>
+
+        <div class="main-content">
+            
+            <div id="hub-view" class="view-panel active-view">
+                <div class="header-panel">
+                    <h1>SYSTEM MONITOR MATRIX</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Parallel Execution Clusters Matrix</p>
+                </div>
+
+                <div class="agent-grid">
+                    <div class="agent-card active" style="border-color: rgba(255, 69, 0, 0.3);">
+                        <div class="agent-status" style="background: rgba(255, 69, 0, 0.1); color: var(--interval-orange); border: 1px solid rgba(255, 69, 0, 0.2);">Deploying</div>
+                        <div class="agent-name">47-&-SIX</div>
+                        <div class="agent-task">The operational storefront. Real-time scheduling, order metrics, and interval deployment.</div>
+                        <div class="log-output" id="hub-log-storefront" style="color: #ffaa66;">> System armed. Monitoring active production lines...</div>
+                    </div>
+
+                    <div class="agent-card active">
+                        <div class="agent-status status-online">Data Sweep</div>
+                        <div class="agent-name">47 RONIN</div>
+                        <div class="agent-task">Parallel Cluster verification & high-velocity target data acquisition.</div>
+                        <div class="log-output" id="hub-log-ronin">> Verification successful. Cluster operational...</div>
+                    </div>
+
+                    <div class="agent-card active">
+                        <div class="agent-status status-online">Indexing</div>
+                        <div class="agent-name">SUSTASIS</div>
+                        <div class="agent-task">Vector memory layer utilizing semantic quantization and HNSW lookups.</div>
+                        <div class="log-output" id="hub-log-sustasis">> Memory space quantized. Index map stable...</div>
+                    </div>
+
+                    <div class="agent-card active">
+                        <div class="agent-status status-online">Listening</div>
+                        <div class="agent-name">TENSILE PROTOCOL</div>
+                        <div class="agent-task">Human-to-Machine high-precision translation layer.</div>
+                        <div class="log-output" id="hub-log-tensile">> Translating baseline instructions... 100% precision.</div>
+                    </div>
+
+                    <div class="agent-card" style="border-color: var(--border); opacity: 0.4;">
+                        <div class="agent-status status-locked">Locked</div>
+                        <div class="agent-name" style="color: var(--text-muted);">[PROTOCOL_05]</div>
+                        <div class="agent-task">Awaiting downstream system architecture allocation...</div>
+                        <div class="log-output" style="background:#000; border-color:#1a1a22; height:110px;"></div>
+                    </div>
+
+                    <div class="agent-card" style="border-color: var(--border); opacity: 0.4;">
+                        <div class="agent-status status-locked">Locked</div>
+                        <div class="agent-name" style="color: var(--text-muted);">[PROTOCOL_06]</div>
+                        <div class="agent-task">Awaiting downstream system architecture allocation...</div>
+                        <div class="log-output" style="background:#000; border-color:#1a1a22; height:110px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="storefront-view" class="view-panel">
+                <div class="header-panel">
+                    <h1>47-&-SIX // INTERACTIVE EXECUTIVE DECK</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Operational Storefront & Interval Deployment Console</p>
+                </div>
+
+                <div class="storefront-layout">
+                    <div class="control-box">
+                        <div class="box-title">ACTIVE PRODUCTION LINE STATUS</div>
+                        <div class="menu-list">
+                            <div class="menu-item">
+                                <div>
+                                    <strong style="color: var(--interval-orange);">INTERVAL CONFIG: CATERING ENGINE</strong>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Automated plates routing matching the 6-minute window grid.</p>
+                                </div>
+                                <button class="btn-deploy" onclick="triggerManualDeployment('[CATERING_ENGINE]')">DEPLOY ORDER</button>
+                            </div>
+                            <div class="menu-item">
+                                <div>
+                                    <strong style="color: var(--text-main);">DIGITAL METRIC: PIPELINE AUDIT</strong>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Audit log tracking execution efficiency and cadence drift thresholds.</p>
+                                </div>
+                                <button class="btn-deploy" style="background:var(--border-focus);" onclick="triggerManualDeployment('[PIPELINE_AUDIT]')">RUN AUDIT</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="control-box" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div class="box-title">DEPLOYMENT FEEDBACK</div>
+                            <div id="storefront-console-output" style="font-family:monospace; font-size:0.8rem; color:#ffaa66; background:#050507; border:1px solid var(--border); padding:15px; height:200px; overflow-y:auto; border-radius:6px;">
+                                [SYSTEM] Standing by for manual deployment signal...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ronin-view" class="view-panel">
+                <div class="header-panel">
+                    <h1>47 RONIN // ACQUISITION CLUSTER MATRIX</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Parallel Specialist Threads & Target Verification Telemetry</p>
+                </div>
+
+                <div class="storefront-layout" style="grid-template-columns: 1fr;">
+                    <div class="control-box">
+                        <div class="box-title">ACTIVE ACQUISITION THREADS</div>
+                        <div class="menu-list" id="ronin-thread-container">
+                            <div class="menu-item" style="border-left: 3px solid var(--accent);">
+                                <div>
+                                    <strong style="font-family: monospace;">RONIN_01 // TARGET_CLUSTER_ALPHA</strong>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Scanning data structures for quantization parameters.</p>
+                                </div>
+                                <div style="font-family: monospace; color: var(--accent); font-size: 0.9rem;" id="ronin-t1-status">SWEEPING // 74%</div>
+                            </div>
+                            <div class="menu-item" style="border-left: 3px solid var(--accent);">
+                                <div>
+                                    <strong style="font-family: monospace;">RONIN_02 // TARGET_CLUSTER_BETA</strong>
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Verifying handshake layers and extraction boundaries.</p>
+                                </div>
+                                <div style="font-family: monospace; color: var(--accent); font-size: 0.9rem;" id="ronin-t2-status">VERIFYING // 41%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
+   
