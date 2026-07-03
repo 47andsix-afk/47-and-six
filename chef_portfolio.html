@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX // Chef Portfolio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">47-&-SIX</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="menu_builder.html">Menu</a>
+      <a href="event_booking.html">Events</a>
+      <a href="inventory.html">Inventory</a>
+      <a href="operations_console.html">Console</a>
+      <a href="chef_credentials.html">Chef</a>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <header class="page-header">
+      <h1>Chef Portfolio</h1>
+      <p>View trained chef knowledge documents indexed from AESOCA files.</p>
+    </header>
+
+    <section class="form-panel">
+      <p id="total-docs">Loading indexed files...</p>
+      <ul id="sample-list"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand">47-&-SIX</div>
+    <p>Chef knowledge portfolio based on indexed training documents.</p>
+  </footer>
+
+  <script type="module">
+    import { getChefPortfolio } from './script.js';
+
+    window.onload = async () => {
+      const data = await getChefPortfolio();
+      document.getElementById('total-docs').innerText = `Training documents indexed: ${data.total_docs}`;
+      const list = document.getElementById('sample-list');
+      (data.samples || []).forEach(item => {
+        const li = document.createElement('li');
+        li.innerText = `${item.filename || item.path || 'unknown'} — ${item.path || ''}`;
+        list.appendChild(li);
+      });
+    };
+  </script>
+</body>
+</html>

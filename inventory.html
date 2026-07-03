@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX // Inventory Manager</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">47-&-SIX</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="menu_builder.html">Menu</a>
+      <a href="event_booking.html">Events</a>
+      <a href="operations_console.html">Console</a>
+      <a href="chef_portfolio.html">Portfolio</a>
+      <a href="chef_credentials.html">Chef</a>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <header class="page-header">
+      <h1>Inventory Manager</h1>
+      <p>Review ingredient status, low stock risks, and reorder recommendations.</p>
+    </header>
+
+    <section class="form-panel">
+      <div class="form-group">
+        <label for="items">Inventory Items</label>
+        <textarea id="items" placeholder="Enter inventory items, one per line..."></textarea>
+      </div>
+      <button class="button-primary" onclick="runInventory()">CHECK INVENTORY</button>
+      <pre id="inv-output" style="margin-top:24px; background:#090909; color:#f1f1f1; padding:24px; border-radius:8px;"></pre>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand">47-&-SIX</div>
+    <p>Inventory checks for kitchen and catering operations.</p>
+  </footer>
+
+  <script>
+    async function runInventory() {
+      const items = document.getElementById('items').value.split('\n').filter(Boolean);
+      const res = await fetch('http://127.0.0.1:8000/inventory', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items })
+      });
+      const data = await res.json();
+      document.getElementById('inv-output').textContent = data.inventory;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX // Event Booking</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">47-&-SIX</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="menu_builder.html">Menu</a>
+      <a href="inventory.html">Inventory</a>
+      <a href="operations_console.html">Console</a>
+      <a href="chef_portfolio.html">Portfolio</a>
+      <a href="chef_credentials.html">Chef</a>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <header class="page-header">
+      <h1>Event Booking</h1>
+      <p>Build catering plans for private dinners, weddings, and hospitality events.</p>
+    </header>
+
+    <section class="form-panel">
+      <div class="form-group">
+        <label for="event-type">Event Type</label>
+        <input id="event-type" placeholder="Wedding, corporate dinner, private tasting..." />
+      </div>
+      <div class="form-group">
+        <label for="guest-count">Guest Count</label>
+        <input id="guest-count" type="number" placeholder="Number of guests" />
+      </div>
+      <div class="form-group">
+        <label for="dietary">Dietary Needs</label>
+        <textarea id="dietary" placeholder="Enter dietary requirements..."></textarea>
+      </div>
+      <button class="button-primary" onclick="planEvent()">PLAN EVENT</button>
+      <pre id="event-output" style="margin-top:24px; background:#090909; color:#f1f1f1; padding:24px; border-radius:8px;"></pre>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand">47-&-SIX</div>
+    <p>Event planning intelligence for chef operations.</p>
+  </footer>
+
+  <script>
+    async function planEvent() {
+      const event_type = document.getElementById('event-type').value;
+      const guest_count = parseInt(document.getElementById('guest-count').value, 10) || 0;
+      const dietary = document.getElementById('dietary').value;
+      const res = await fetch('http://127.0.0.1:8000/event-planning', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type, guest_count, dietary })
+      });
+      const data = await res.json();
+      document.getElementById('event-output').textContent = data.event_plan;
+    }
+  </script>
+</body>
+</html>

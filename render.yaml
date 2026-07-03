@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: 47andsix-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app -k uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: AUTH_USERS_JSON
+        sync: false
+      - key: BUILD_INDEX_ON_STARTUP
+        value: "true"
+      - key: CHROMA_DB_PATH
+        value: /var/chroma_db
+      - key: SCHOOL_DIR
+        value: /var/chef_knowledge_data
+      - key: USE_MOCK_RESPONSES
+        value: "false"
+
+disks:
+  - name: chroma-storage
+    mountPath: /var/chroma_db
+    sizeGB: 2
+  - name: knowledge-storage
+    mountPath: /var/chef_knowledge_data
+    sizeGB: 2

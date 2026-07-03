@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX // Chef Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">47-&-SIX</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="menu_builder.html">Menu</a>
+      <a href="event_booking.html">Events</a>
+      <a href="inventory.html">Inventory</a>
+      <a href="operations_console.html">Console</a>
+      <a href="chef_portfolio.html">Portfolio</a>
+      <a href="chef_credentials.html">Chef</a>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <header class="page-header">
+      <h1>Chef Dashboard</h1>
+      <p>Generate executive summaries, margin guidance, and operational actions for chef-driven events.</p>
+    </header>
+
+    <section class="form-panel">
+      <div class="form-group">
+        <label for="dash-input">Dashboard Inquiry</label>
+        <textarea id="dash-input" placeholder="Enter a query for the chef dashboard..."></textarea>
+      </div>
+      <button class="button-primary" onclick="runDashboard()">RUN DASHBOARD</button>
+      <pre id="dash-output" style="margin-top:24px; background:#090909; color:#f1f1f1; padding:24px; border-radius:8px;"></pre>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand">47-&-SIX</div>
+    <p>Chef operations dashboard for menu, staffing, and inventory planning.</p>
+  </footer>
+
+  <script>
+    async function runDashboard() {
+      const msg = document.getElementById('dash-input').value;
+      const res = await fetch('http://127.0.0.1:8000/chef-dashboard', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg })
+      });
+      const data = await res.json();
+      document.getElementById('dash-output').textContent = data.dashboard;
+    }
+  </script>
+</body>
+</html>
