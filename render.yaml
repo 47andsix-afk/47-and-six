@@ -19,7 +19,7 @@ services:
       - key: SCHOOL_DIR
         value: /var/chef_knowledge_data
       - key: USE_MOCK_RESPONSES
-        value: "false"
+        value: "true"
 
 disks:
   - name: chroma-storage

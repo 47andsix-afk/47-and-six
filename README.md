@@ -34,83 +34,152 @@ It is a chef operations system designed to support:
 - static frontend: `index.html`, `dashboard.html`, `menu_builder.html`, `event_booking.html`, `inventory.html`, `operations_console.html`
 
 ## Key Backend Capabilities
+# 47-&-SIX
 
-### Core API and Auth
+Private chef systems, class portfolio, and operational tooling built around real cooking work, disciplined training, and a high-performance private service model.
 
-- JWT-style auth with roles (`viewer`, `chef`, `admin`)
-- protected operational endpoints
-- graceful dependency fallback behavior (503 where subsystem is unavailable)
+## What This Is
 
-### Agentic Operations
+47-&-SIX is both a public-facing chef brand and a private operations portal. The public site presents the concept, class work, and service story. The private portal supports planning, costing, inventory, event prep, and internal decision-making.
 
-- orchestrator with:
-  - Gemini-selected function calls
-  - parallel execution
-  - chained execution with dependency references
-- domain agent modules for chef, ops, and menu workflows
+This project is intentionally practical. It is meant to support a real culinary business, not just demonstrate code.
 
-### Chef Knowledge
+## Concept
 
-- file loading and extraction
-- deterministic embedding fallback
-- ChromaDB persistence when available
-- knowledge routes:
-  - `GET /chef/knowledge/files`
-  - `GET /chef/knowledge/portfolio`
-  - `POST /chef/knowledge/search`
+**The Daily Stack: Private Culinary Systems** is a mobile private chef and catering concept serving El Paso, TX, especially the Upper Valley and West Side Estates. The service is built around:
 
-### Willow Explainability
+- on-site private dining
+- breakfast-to-dinner support
+- cooler-based meal and hydration prep
+- family lifestyle integration
+- clean, safe, high-discipline kitchen execution
 
-- `POST /willow/explain`
-- reversible traces
-- counterfactual analysis
-- uncertainty map
-- branch amplitudes
-- causal graph output
+The concept is designed for households and professionals who want more than a meal. They want a system that saves time, reduces stress, and keeps people fueled.
 
-### Willow Operating Mirror (v0.2)
+## Chef Background
 
-Durable, seeded, simulation-ready subsystem with SQLite persistence.
+Cooking started young, standing on a chair to reach the counter and learn from family. The kitchen ethic was simple:
 
-Implemented endpoints:
+- clean cook
+- safe cook
+- stay organized
+- respect the food
 
-- `GET /willow/operating-mirror/graph`
-- `POST /willow/operating-mirror/graph`
-- `POST /willow/operating-mirror/graph/seed?overwrite=false|true`
-- `POST /willow/operating-mirror/simulate`
-- `POST /willow/operating-mirror/reverse-engineer`
-- `GET /willow/operating-mirror/dashboard`
-- `POST /willow/operating-mirror/decision-ledger`
-- `GET /willow/operating-mirror/decision-ledger/{decision_id}`
+That foundation shaped the way this business operates now. The goal is still the same: make food that matters, keep the process clean, and serve people with care.
 
-Operating Mirror persistence tables:
+## Education and Training
 
-- `operating_mirror_graphs`
-- `operating_mirror_simulations`
-- `operating_mirror_dashboard_snapshots`
-- `operating_mirror_decisions`
-- `operating_mirror_reverse_reviews`
+Current culinary training includes:
 
-## Setup
+- CU101 Culinary Foundations
+- CU122 Culinary Arts and Patisserie
+- CU132 World Cuisines
+- CU222 The Farm to Table Kitchen
+- CE160 Culinary Entrepreneurship
+- CE167 Purchasing and Cost Control
+- CE187 Menu Design and Management
+- OR120-O Culinary Student Orientation
 
-1. Create and activate virtual environment.
+Current status:
+
+- finished walking July 28
+- in externship phase
+- completing hours through private chef work
+- balancing school, business, and portfolio building
+
+## Class Portfolio
+
+The class menu and plate portfolio live in [class_menu.html](class_menu.html). It includes CU222 dishes such as:
+
+- Honey Granola
+- Pan Toasted Nuts
+- Dukkah
+- Black Bean Burger
+- Arroz con Pollo
+- Fish en Papillote
+- Cauliflower Steak
+- Chicken Confit
+- Gravlax
+- Farmer’s Cheese
+
+The page also includes photo slots for plated work so real images can be added as the portfolio grows.
+
+## Public Site and Private Portal
+
+The site is split into two clear experiences:
+
+- **Public homepage**: brand, concept, services, story, and contact path
+- **Private portal**: login-protected tools for dashboard, menu costing, inventory, event planning, and operations console
+
+This split keeps the client-facing site polished while protecting the internal workflow.
+
+## Business Model
+
+The business is built as a premium private chef and catering operation with a structured weekly rhythm:
+
+- Friday through Monday: primary service, high-margin dinners, private events, and catering
+- Tuesday through Thursday: planning, sourcing, cooler prep, and meal drops
+
+The model focuses on long-term household relationships, trust, and repeatable service rather than one-time plates.
+
+## Target Market
+
+The ideal client is a high-net-worth household, founder, or professional who values:
+
+- time
+- health
+- privacy
+- consistency
+- manual mastery
+
+Typical clients may include busy families, tech founders, surgeons, executives, and other high-demand households.
+
+## Website Features
+
+The frontend includes:
+
+- public marketing and concept pages
+- private portal login flow
+- class menu portfolio page
+- plate photo gallery scaffolding
+- dashboard, menu, inventory, event, and operations pages
+
+## Backend Features
+
+The FastAPI backend supports:
+
+- role-based authentication
+- private operational endpoints
+- chef knowledge retrieval
+- Willow explainability
+- Operating Mirror v0.2 simulation and persistence
+- fallback/mock mode for safe development
+
+## Tech Stack
+
+- FastAPI backend
+- static HTML/CSS/JS frontend
+- agent orchestration
+- knowledge indexing/search
+- SQLite persistence for operational mirror state
+- Google OAuth and Gemini configuration support
+
+## Local Run
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+uvicorn main:app --app-dir D:\workspace\repos\workspace --host 127.0.0.1 --port 8000 --reload
 ```
 
-2. Install dependencies.
+## Environment Variables
 
-```powershell
-python -m pip install -r requirements.txt -r requirements-dev.txt
-```
-
-3. Create `.env`.
+Create a local `.env` file with the following values:
 
 ```env
 GEMINI_API_KEY=your_api_key_here
-GEMINI_MODEL=gemini-2.0-flash
+ENABLE_PAID_AI=true
+GOOGLE_OAUTH_CLIENT_ID=your_client_id_here
+GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret_here
+GOOGLE_OAUTH_REDIRECT_URI=http://127.0.0.1:8000/auth/google/callback
 USE_MOCK_RESPONSES=false
 BUILD_INDEX_ON_STARTUP=false
 JWT_SECRET_KEY=replace-with-a-long-random-secret
@@ -119,85 +188,18 @@ CHROMA_DB_PATH=./chroma_db
 SCHOOL_DIR=./chef_knowledge_data
 OPERATING_MIRROR_DB_PATH=./chroma_db/operating_mirror.db
 
-# Option A: bootstrap single account
 AUTH_USERNAME=admin
 AUTH_PASSWORD=change-me-now
 AUTH_ROLES=admin
-
-# Option B: multiple role accounts
-# AUTH_USERS_JSON=[{"username":"admin","password":"change-me-now","roles":["admin"]},{"username":"chef","password":"change-me-now","roles":["chef"]},{"username":"viewer","password":"change-me-now","roles":["viewer"]}]
 ```
 
-## Run Locally
+## Deployment Notes
 
-```powershell
-uvicorn main:app --app-dir D:\workspace\repos\workspace --host 127.0.0.1 --port 8000 --reload
-```
+- GitHub Pages can host the public site
+- Render or another host can run the FastAPI backend
+- OAuth redirect URIs must match the deployed backend exactly
+- Keep live API keys out of the frontend and out of version control
 
-Run tests:
+## Final Note
 
-```powershell
-python -m pytest -q
-```
-
-Optional marker runs:
-
-```powershell
-python -m pytest -q -m "not perf"
-python -m pytest -q -m perf
-```
-
-## Frontend Usage
-
-Pages are static and call the API at `http://127.0.0.1:8000` by default.
-
-Shared API helper is in `script.js` and supports:
-
-- runtime base URL override with `window.__API_BASE__`
-- stored base URL via `setApiBase(...)`
-- bearer token management for protected routes
-
-## Quality Baseline
-
-Current suite includes:
-
-- app smoke
-- orchestrator behavior
-- chef knowledge behavior
-- willow logic and API integration
-- auth negative paths and schema contracts
-- openapi contract checks
-- operating mirror flow tests
-
-## Deployment
-
-- Render config: `render.yaml`
-- Cloud Build config: `cloudbuild.yaml`
-- Process start profile: `Procfile`
-
-Recommended production settings:
-
-1. Keep `USE_MOCK_RESPONSES=false`
-2. Set strong `JWT_SECRET_KEY`
-3. Persist `CHROMA_DB_PATH` and Operating Mirror DB path
-4. Secure API keys via provider secret manager
-
-## Product Direction
-
-The current milestone is **Operating Mirror v0.2**:
-
-- durable causal graph state
-- seedable default graph
-- deterministic simulation with causal path tracing
-- richer dashboard schema (`top_causal_paths`, `risk_panel`, `recommended_actions`)
-- reverse-engineering root-cause ranking with recommended fixes
-
-Next planned direction:
-
-1. simulation/review retrieval endpoints by ID and query filters
-2. longitudinal dashboard reporting
-3. tighter causal-path assertions and calibration tooling
-
-## License / Ownership
-
-Internal project for 47-&-SIX operations platform development.
+This project is the bridge between culinary training and a real private chef business. It is meant to show the system behind the food: discipline, logistics, hospitality, and the ability to build something dependable from real experience.

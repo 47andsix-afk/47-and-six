@@ -7,11 +7,16 @@ import hmac
 import importlib
 import json
 import os
+import secrets
 import time
 from typing import Any, AsyncIterator, Optional
+from urllib.parse import urlencode, quote
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 
 from fastapi import APIRouter, Body, Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 chromadb: Any = None
@@ -32,7 +37,7 @@ except ImportError:
     types = None
 
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
 try:
     from agents.chef_agent import ChefAgent
@@ -185,8 +190,23 @@ except ImportError:
 
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-USE_MOCK = os.getenv("USE_MOCK_RESPONSES", "false").lower() in ("1", "true", "yes")
+PAID_AI_ENABLED = os.getenv("ENABLE_PAID_AI", "false").lower() in ("1", "true", "yes")
+USE_MOCK = not PAID_AI_ENABLED
 CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
+GOOGLE_OAUTH_REDIRECT_URI = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "").strip()
+GOOGLE_OAUTH_DEFAULT_NEXT = os.getenv("GOOGLE_OAUTH_DEFAULT_NEXT", "http://127.0.0.1:8000/portal.html").strip()
+GOOGLE_OAUTH_ALLOWED_EMAILS = {
+    value.strip().lower()
+    for value in os.getenv("GOOGLE_OAUTH_ALLOWED_EMAILS", "").split(",")
+    if value.strip()
+}
+GOOGLE_OAUTH_DEFAULT_ROLES = [
+    role.strip()
+    for role in os.getenv("GOOGLE_OAUTH_DEFAULT_ROLES", "chef,admin").split(",")
+    if role.strip()
+] or ["chef"]
 
 client_genai = Client(api_key=API_KEY) if Client and API_KEY else None
 AUTH_USERS = load_auth_users()
@@ -265,7 +285,7 @@ def _generate_text(
     tools: Optional[list[Any]] = None,
 ) -> str:
     if USE_MOCK:
-        return "[MOCK] API not called: returning canned response for development."
+        return _mock_response(prompt, response_mime_type=response_mime_type)
 
     if client_genai is None:
         return "Google GenAI is not configured. Set GEMINI_API_KEY to enable responses."
@@ -298,6 +318,91 @@ def _generate_text(
         return f"Generation failed: {msg}"
 
 
+def _mock_response(prompt: str, *, response_mime_type: Optional[str] = None) -> str:
+    if response_mime_type == "application/json":
+        if '"total_cost"' in prompt and '"cost_per_portion"' in prompt:
+            return json.dumps(
+                {
+                    "total_cost": 128.0,
+                    "cost_per_portion": 16.0,
+                    "notes": "Free mode estimate using deterministic sample pricing.",
+                },
+                indent=2,
+            )
+        if '"menu"' in prompt and '"staffing"' in prompt and '"equipment"' in prompt:
+            return json.dumps(
+                {
+                    "menu": ["Seared chicken with herb jus", "Seasonal roasted vegetables"],
+                    "staffing": ["1 lead chef", "1 prep cook", "1 service support"],
+                    "timeline": ["T-24h prep proteins and sauces", "T-3h finish sides and staging"],
+                    "equipment": ["Cambro hot box", "Induction burner", "Chef knives"],
+                },
+                indent=2,
+            )
+        if '"low_stock"' in prompt and '"reorder"' in prompt and '"par_levels"' in prompt:
+            return json.dumps(
+                {
+                    "low_stock": ["cream", "microgreens"],
+                    "reorder": ["olive oil", "kosher salt"],
+                    "par_levels": {"cream": "2 qt", "olive oil": "1 case"},
+                    "notes": "Free mode inventory signal generated without external AI.",
+                },
+                indent=2,
+            )
+        if '"operational_focus"' in prompt and '"cost_risk"' in prompt:
+            return _build_dashboard_fallback(prompt, "free mode enabled")
+        if '"intent"' in prompt and '"priority"' in prompt:
+            return json.dumps(
+                {
+                    "intent": "operational_planning",
+                    "priority": "medium",
+                    "operational_steps": [
+                        "Review current bookings and staffing coverage.",
+                        "Confirm ingredient availability for the next service window.",
+                    ],
+                    "notes": "Returned from free mode without external AI usage.",
+                },
+                indent=2,
+            )
+        return json.dumps({"status": "free_mode", "notes": "Deterministic JSON fallback returned."}, indent=2)
+
+    condensed_prompt = " ".join(prompt.strip().split())
+    snippet = condensed_prompt[:180] if condensed_prompt else "general operations"
+    return f"[FREE MODE] Deterministic response for: {snippet}"
+
+
+def _is_model_error_response(text: str) -> bool:
+    return text.startswith((
+        "API quota exceeded:",
+        "Generation failed:",
+        "Google GenAI is not configured.",
+        "Google GenAI is not available in this environment.",
+    ))
+
+
+def _build_dashboard_fallback(message: str, model_error: str) -> str:
+    inquiry = (message or "today's operations").strip()
+    focus = inquiry[:140]
+    payload = {
+        "operational_focus": f"Stabilize chef operations around: {focus}",
+        "cost_risk": "medium",
+        "menu_actions": [
+            "Prioritize highest-margin menu items for near-term events.",
+            "Hold menu substitutions for ingredients with volatile supply or pricing.",
+        ],
+        "staffing_actions": [
+            "Confirm lead chef and support coverage for the next 72 hours.",
+            "Cross-check prep workload against booked events before adding overtime.",
+        ],
+        "inventory_actions": [
+            "Review proteins, dairy, and produce for low-stock or spoilage exposure.",
+            "Defer noncritical purchases until event volumes are reconfirmed.",
+        ],
+        "notes": f"Local fallback used because AI generation is unavailable. Source issue: {model_error[:180]}",
+    }
+    return json.dumps(payload, indent=2)
+
+
 async def _generate_text_async(
     prompt: str,
     *,
@@ -305,7 +410,7 @@ async def _generate_text_async(
     tools: Optional[list[Any]] = None,
 ) -> str:
     if USE_MOCK:
-        return "[MOCK] API not called: returning canned response for development."
+        return _mock_response(prompt, response_mime_type=response_mime_type)
 
     return await asyncio.to_thread(_generate_text, prompt, response_mime_type=response_mime_type, tools=tools)
 
@@ -328,6 +433,96 @@ def _missing_feature(feature_name: str) -> None:
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         detail=f"{feature_name} is unavailable in this build",
     )
+
+
+def _is_safe_redirect_target(value: str) -> bool:
+    if not value:
+        return False
+    return value.startswith(("https://", "http://", "/", "file:///"))
+
+
+def _encode_google_state(next_url: str) -> str:
+    payload = {
+        "next": next_url,
+        "nonce": secrets.token_urlsafe(12),
+        "exp": int(time.time()) + 600,
+    }
+    raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    encoded_payload = base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+    signature = hmac.new(
+        os.getenv("JWT_SECRET_KEY", "development-secret-change-me").encode("utf-8"),
+        encoded_payload.encode("ascii"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"{encoded_payload}.{signature}"
+
+
+def _decode_google_state(state: str) -> Optional[dict[str, Any]]:
+    try:
+        encoded_payload, signature = state.split(".", 1)
+    except ValueError:
+        return None
+
+    expected_signature = hmac.new(
+        os.getenv("JWT_SECRET_KEY", "development-secret-change-me").encode("utf-8"),
+        encoded_payload.encode("ascii"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected_signature):
+        return None
+
+    padded_payload = encoded_payload + "=" * (-len(encoded_payload) % 4)
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(padded_payload.encode("ascii")))
+    except (ValueError, json.JSONDecodeError):
+        return None
+
+    exp = int(payload.get("exp", 0))
+    if exp <= int(time.time()):
+        return None
+    return payload
+
+
+def _exchange_google_code_for_tokens(code: str) -> dict[str, Any]:
+    form = urlencode(
+        {
+            "code": code,
+            "client_id": GOOGLE_OAUTH_CLIENT_ID,
+            "client_secret": GOOGLE_OAUTH_CLIENT_SECRET,
+            "redirect_uri": GOOGLE_OAUTH_REDIRECT_URI,
+            "grant_type": "authorization_code",
+        }
+    ).encode("utf-8")
+    req = Request(
+        url="https://oauth2.googleapis.com/token",
+        data=form,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+    try:
+        with urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Google token exchange failed: {detail}") from exc
+    except URLError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google token exchange unavailable") from exc
+
+
+def _fetch_google_userinfo(access_token: str) -> dict[str, Any]:
+    req = Request(
+        url="https://openidconnect.googleapis.com/v1/userinfo",
+        headers={"Authorization": f"Bearer {access_token}"},
+        method="GET",
+    )
+    try:
+        with urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Google userinfo fetch failed: {detail}") from exc
+    except URLError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google userinfo endpoint unavailable") from exc
 
 
 class Inquiry(BaseModel):
@@ -538,6 +733,70 @@ async def login(req: LoginRequest):
     return TokenResponse(access_token=token, expires_at=expires_at, roles=user.roles)
 
 
+@auth_router.get("/google/start")
+async def google_start(next: Optional[str] = None):
+    if not GOOGLE_OAUTH_CLIENT_ID or not GOOGLE_OAUTH_CLIENT_SECRET or not GOOGLE_OAUTH_REDIRECT_URI:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google OAuth is not configured")
+
+    next_url = (next or GOOGLE_OAUTH_DEFAULT_NEXT).strip()
+    if not _is_safe_redirect_target(next_url):
+        next_url = GOOGLE_OAUTH_DEFAULT_NEXT
+    state = _encode_google_state(next_url)
+
+    auth_query = urlencode(
+        {
+            "client_id": GOOGLE_OAUTH_CLIENT_ID,
+            "redirect_uri": GOOGLE_OAUTH_REDIRECT_URI,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "access_type": "online",
+            "prompt": "select_account",
+            "state": state,
+        }
+    )
+    return RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?{auth_query}")
+
+
+@auth_router.get("/google/callback")
+async def google_callback(code: Optional[str] = None, state: Optional[str] = None, error: Optional[str] = None):
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Google OAuth error: {error}")
+    if not code:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing authorization code")
+
+    state_payload = _decode_google_state(state or "") if state else None
+    next_url = GOOGLE_OAUTH_DEFAULT_NEXT
+    if state_payload and _is_safe_redirect_target(str(state_payload.get("next", ""))):
+        next_url = str(state_payload["next"])
+
+    token_payload = await asyncio.to_thread(_exchange_google_code_for_tokens, code)
+    google_access_token = str(token_payload.get("access_token", ""))
+    if not google_access_token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google OAuth did not return an access token")
+
+    userinfo = await asyncio.to_thread(_fetch_google_userinfo, google_access_token)
+    email = str(userinfo.get("email", "")).strip().lower()
+    if not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Google profile did not include an email")
+
+    if GOOGLE_OAUTH_ALLOWED_EMAILS and email not in GOOGLE_OAUTH_ALLOWED_EMAILS:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Google account is not authorized for this application")
+
+    token, expires_at = create_access_token(email, GOOGLE_OAUTH_DEFAULT_ROLES)
+    fragment = urlencode(
+        {
+            "access_token": token,
+            "token_type": "bearer",
+            "expires_at": str(expires_at),
+            "username": email,
+            "roles": ",".join(GOOGLE_OAUTH_DEFAULT_ROLES),
+        },
+        quote_via=quote,
+    )
+    redirect_url = f"{next_url}#oauth=1&{fragment}"
+    return RedirectResponse(url=redirect_url)
+
+
 @auth_router.get("/me")
 async def me(user: CurrentUser = Depends(require_roles("viewer", "chef", "admin"))):
     return {"username": user.username, "roles": user.roles}
@@ -567,6 +826,7 @@ def health_check():
         "status": "ok",
         "gemini_configured": client_genai is not None,
         "use_mock": USE_MOCK,
+        "google_oauth_configured": bool(GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET and GOOGLE_OAUTH_REDIRECT_URI),
         "chromadb_available": collection is not None,
         "model": MODEL_NAME,
         "index_build_on_startup": os.getenv("BUILD_INDEX_ON_STARTUP", "false").lower() in ("1", "true", "yes"),
@@ -586,6 +846,8 @@ def status_check():
             "/health",
             "/status",
             "/auth/login",
+            "/auth/google/start",
+            "/auth/google/callback",
             "/auth/me",
             "/chef/credentials",
             "/chat",
@@ -698,6 +960,15 @@ async def tools_endpoint(inquiry: Inquiry, _: CurrentUser = Depends(require_role
 
 @app.post("/embed")
 async def embed_text(req: EmbedRequest, _: CurrentUser = Depends(require_roles("admin"))):
+    if USE_MOCK:
+        if collection is not None:
+            collection.add(
+                ids=[req.id],
+                documents=[req.text],
+                metadatas=[{"source": "mock-api"}],
+            )
+        return {"status": "mock_embedded", "id": req.id}
+
     if client_genai is None:
         return {"status": "not_configured", "id": req.id}
 
@@ -793,7 +1064,10 @@ async def chef_dashboard(inquiry: Inquiry, _: CurrentUser = Depends(require_role
       "notes": "string"
     }}
     """
-    return {"dashboard": _generate_text(prompt, response_mime_type="application/json")}
+    dashboard = _generate_text(prompt, response_mime_type="application/json")
+    if _is_model_error_response(dashboard):
+        dashboard = _build_dashboard_fallback(inquiry.message, dashboard)
+    return {"dashboard": dashboard}
 
 
 if chef_knowledge_router is not None:

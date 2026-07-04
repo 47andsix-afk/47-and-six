@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX // Portal</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">47-&-SIX</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="login.html">Login</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="menu_builder.html">Menu</a>
+      <a href="event_booking.html">Events</a>
+      <a href="inventory.html">Inventory</a>
+      <a href="operations_console.html">Console</a>
+      <a href="chef_portfolio.html">Portfolio</a>
+      <a href="chef_credentials.html">Chef</a>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <header class="page-header">
+      <h1>Private Portal</h1>
+      <p>Authenticated workspace for dashboard, menu, inventory, event planning, and operations controls.</p>
+    </header>
+
+    <section class="form-panel">
+      <div class="form-group">
+        <label for="portal-input">Portal Inquiry</label>
+        <textarea id="portal-input" placeholder="Ask for a menu, staffing, inventory, or event plan..."></textarea>
+      </div>
+      <div class="page-grid page-grid-2">
+        <button class="button-primary" onclick="runPortalChat()">RUN PORTAL CHAT</button>
+        <button class="button-secondary" onclick="goToLogin()">SIGN OUT / SWITCH USER</button>
+      </div>
+      <pre id="portal-output" style="margin-top:24px; background:#090909; color:#f1f1f1; padding:24px; border-radius:8px; white-space:pre-wrap;"></pre>
+    </section>
+
+    <section class="content-section">
+      <h2>Private Modules</h2>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-tag">01</div>
+          <h3>Dashboard</h3>
+          <p>Executive summaries for menu, staffing, and inventory decisions.</p>
+          <a class="card-link" href="dashboard.html">Open dashboard</a>
+        </div>
+        <div class="card">
+          <div class="card-tag">02</div>
+          <h3>Menu Builder</h3>
+          <p>Estimate costs, portion pricing, and client-facing menu outcomes.</p>
+          <a class="card-link" href="menu_builder.html">Open builder</a>
+        </div>
+        <div class="card">
+          <div class="card-tag">03</div>
+          <h3>Inventory Manager</h3>
+          <p>Check stock posture, reorder priorities, and kitchen par levels.</p>
+          <a class="card-link" href="inventory.html">Open inventory</a>
+        </div>
+        <div class="card">
+          <div class="card-tag">04</div>
+          <h3>Event Booking</h3>
+          <p>Plan catering events with precise guest, dietary, and equipment guidance.</p>
+          <a class="card-link" href="event_booking.html">Open booking</a>
+        </div>
+        <div class="card">
+          <div class="card-tag">05</div>
+          <h3>Operations Console</h3>
+          <p>Run tools, JSON mode, embeddings, and custom chef prompts.</p>
+          <a class="card-link" href="operations_console.html">Open console</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand">47-&-SIX</div>
+    <p>Internal portal for authenticated chef operations.</p>
+  </footer>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    const TOKEN_KEY = 'auth_token';
+
+    function requireToken() {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        window.location.href = 'login.html?next=portal.html';
+        return null;
+      }
+      return token;
+    }
+
+    async function runPortalChat() {
+      const token = requireToken();
+      if (!token) return;
+
+      const message = document.getElementById('portal-input').value.trim();
+      const output = document.getElementById('portal-output');
+
+      if (!message) {
+        output.textContent = 'Enter a question first.';
+        return;
+      }
+
+      output.textContent = 'Running portal chat...';
+
+      try {
+        const res = await fetch(`${API_BASE}/agents/concierge`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ message })
+        });
+        const data = await res.json();
+        output.textContent = data.reply || data.detail || 'Request failed.';
+      } catch (err) {
+        output.textContent = `Portal error: ${err.message}`;
+      }
+    }
+
+    function goToLogin() {
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = 'login.html?next=portal.html';
+    }
+
+    requireToken();
+  </script>
+</body>
+</html>

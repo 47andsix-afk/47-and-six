@@ -11,6 +11,8 @@
     <div class="brand">47-&-SIX</div>
     <div class="nav-links">
       <a href="index.html">Home</a>
+      <a href="portal.html">Portal</a>
+      <a href="login.html?next=event_booking.html">Login</a>
       <a href="dashboard.html">Dashboard</a>
       <a href="menu_builder.html">Menu</a>
       <a href="inventory.html">Inventory</a>
@@ -50,15 +52,34 @@
   </footer>
 
   <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    const TOKEN_KEY = 'auth_token';
+
     async function planEvent() {
       const event_type = document.getElementById('event-type').value;
       const guest_count = parseInt(document.getElementById('guest-count').value, 10) || 0;
       const dietary = document.getElementById('dietary').value;
-      const res = await fetch('http://127.0.0.1:8000/event-planning', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type, guest_count, dietary })
+      const output = document.getElementById('event-output');
+      const token = localStorage.getItem(TOKEN_KEY);
+
+      if (!token) {
+        output.textContent = 'Login required. Redirecting...';
+        window.setTimeout(() => {
+          window.location.href = 'login.html?next=event_booking.html';
+        }, 400);
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/event-planning`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ event_type, guest_count, dietary })
       });
       const data = await res.json();
-      document.getElementById('event-output').textContent = data.event_plan;
+      output.textContent = data.event_plan || data.detail || 'Request failed.';
     }
   </script>
 </body>

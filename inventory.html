@@ -11,6 +11,8 @@
     <div class="brand">47-&-SIX</div>
     <div class="nav-links">
       <a href="index.html">Home</a>
+      <a href="portal.html">Portal</a>
+      <a href="login.html?next=inventory.html">Login</a>
       <a href="dashboard.html">Dashboard</a>
       <a href="menu_builder.html">Menu</a>
       <a href="event_booking.html">Events</a>
@@ -42,13 +44,32 @@
   </footer>
 
   <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    const TOKEN_KEY = 'auth_token';
+
     async function runInventory() {
       const items = document.getElementById('items').value.split('\n').filter(Boolean);
-      const res = await fetch('http://127.0.0.1:8000/inventory', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items })
+      const output = document.getElementById('inv-output');
+      const token = localStorage.getItem(TOKEN_KEY);
+
+      if (!token) {
+        output.textContent = 'Login required. Redirecting...';
+        window.setTimeout(() => {
+          window.location.href = 'login.html?next=inventory.html';
+        }, 400);
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/inventory`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ items })
       });
       const data = await res.json();
-      document.getElementById('inv-output').textContent = data.inventory;
+      output.textContent = data.inventory || data.detail || 'Request failed.';
     }
   </script>
 </body>

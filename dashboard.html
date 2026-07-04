@@ -11,6 +11,8 @@
     <div class="brand">47-&-SIX</div>
     <div class="nav-links">
       <a href="index.html">Home</a>
+      <a href="portal.html">Portal</a>
+      <a href="login.html?next=dashboard.html">Login</a>
       <a href="menu_builder.html">Menu</a>
       <a href="event_booking.html">Events</a>
       <a href="inventory.html">Inventory</a>
@@ -28,6 +30,13 @@
 
     <section class="form-panel">
       <div class="form-group">
+        <label for="dash-user">Dashboard Login</label>
+        <input id="dash-user" type="text" placeholder="Username" autocomplete="username" />
+        <input id="dash-pass" type="password" placeholder="Password" autocomplete="current-password" />
+      </div>
+      <button class="button-primary" onclick="loginDashboard()">LOGIN</button>
+
+      <div class="form-group">
         <label for="dash-input">Dashboard Inquiry</label>
         <textarea id="dash-input" placeholder="Enter a query for the chef dashboard..."></textarea>
       </div>
@@ -42,13 +51,85 @@
   </footer>
 
   <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    const TOKEN_KEY = 'auth_token';
+
+    async function loginDashboard() {
+      const username = document.getElementById('dash-user').value.trim();
+      const password = document.getElementById('dash-pass').value;
+      const output = document.getElementById('dash-output');
+
+      if (!username || !password) {
+        output.textContent = 'Enter username and password before logging in.';
+        return;
+      }
+
+      output.textContent = 'Logging in...';
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.access_token) {
+          output.textContent = data.detail || 'Login failed.';
+          return;
+        }
+
+        localStorage.setItem(TOKEN_KEY, data.access_token);
+        output.textContent = 'Login successful. You can now run dashboard inquiries.';
+      } catch (err) {
+        output.textContent = `Login error: ${err.message}`;
+      }
+    }
+
     async function runDashboard() {
-      const msg = document.getElementById('dash-input').value;
-      const res = await fetch('http://127.0.0.1:8000/chef-dashboard', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg })
-      });
-      const data = await res.json();
-      document.getElementById('dash-output').textContent = data.dashboard;
+      const msg = document.getElementById('dash-input').value.trim();
+      const output = document.getElementById('dash-output');
+      const token = localStorage.getItem(TOKEN_KEY);
+
+      if (!msg) {
+        output.textContent = 'Enter a dashboard inquiry first.';
+        return;
+      }
+
+      if (!token) {
+        output.textContent = 'Login required. Redirecting to the login page...';
+        window.setTimeout(() => {
+          window.location.href = 'login.html?next=dashboard.html';
+        }, 400);
+        return;
+      }
+
+      output.textContent = 'Running dashboard inquiry...';
+
+      try {
+        const res = await fetch(`${API_BASE}/chef-dashboard`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ message: msg })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail || `Request failed with status ${res.status}.`;
+          if (res.status === 401) {
+            localStorage.removeItem(TOKEN_KEY);
+          }
+          output.textContent = detail;
+          return;
+        }
+
+        output.textContent = data.dashboard || JSON.stringify(data, null, 2);
+      } catch (err) {
+        output.textContent = `Dashboard error: ${err.message}`;
+      }
     }
   </script>
 </body>

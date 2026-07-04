@@ -11,6 +11,8 @@
     <div class="brand">47-&-SIX</div>
     <div class="nav-links">
       <a href="index.html">Home</a>
+      <a href="portal.html">Portal</a>
+      <a href="login.html?next=menu_builder.html">Login</a>
       <a href="dashboard.html">Dashboard</a>
       <a href="event_booking.html">Events</a>
       <a href="inventory.html">Inventory</a>
@@ -46,14 +48,33 @@
   </footer>
 
   <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    const TOKEN_KEY = 'auth_token';
+
     async function costMenu() {
       const ingredients = document.getElementById('ingredients').value.split('\n').filter(Boolean);
       const portions = parseInt(document.getElementById('portions').value, 10) || 0;
-      const res = await fetch('http://127.0.0.1:8000/menu-cost', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ingredients, portions })
+      const output = document.getElementById('menu-output');
+      const token = localStorage.getItem(TOKEN_KEY);
+
+      if (!token) {
+        output.textContent = 'Login required. Redirecting...';
+        window.setTimeout(() => {
+          window.location.href = 'login.html?next=menu_builder.html';
+        }, 400);
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/menu-cost`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ingredients, portions })
       });
       const data = await res.json();
-      document.getElementById('menu-output').textContent = data.menu_cost;
+      output.textContent = data.menu_cost || data.detail || 'Request failed.';
     }
   </script>
 </body>

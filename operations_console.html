@@ -11,6 +11,8 @@
     <div class="brand">47-&-SIX</div>
     <div class="nav-links">
       <a href="index.html">Home</a>
+      <a href="portal.html">Portal</a>
+      <a href="login.html?next=operations_console.html">Login</a>
       <a href="dashboard.html">Dashboard</a>
       <a href="menu_builder.html">Menu</a>
       <a href="event_booking.html">Events</a>
@@ -47,28 +49,67 @@
   </footer>
 
   <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    const TOKEN_KEY = 'auth_token';
+
+    function getTokenOrRedirect() {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        document.getElementById('ops-output').textContent = 'Login required. Redirecting...';
+        window.setTimeout(() => {
+          window.location.href = 'login.html?next=operations_console.html';
+        }, 400);
+        return null;
+      }
+      return token;
+    }
+
     async function runTools() {
       const msg = document.getElementById('ops-input').value;
-      const res = await fetch('http://127.0.0.1:8000/tools', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg })
+      const token = getTokenOrRedirect();
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/tools`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: msg })
       });
       const data = await res.json();
-      document.getElementById('ops-output').textContent = data.raw;
+      document.getElementById('ops-output').textContent = data.raw || data.detail || 'Request failed.';
     }
 
     async function runJSON() {
       const msg = document.getElementById('ops-input').value;
-      const res = await fetch('http://127.0.0.1:8000/json', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg })
+      const token = getTokenOrRedirect();
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: msg })
       });
       const data = await res.json();
-      document.getElementById('ops-output').textContent = data.json;
+      document.getElementById('ops-output').textContent = data.json || data.detail || 'Request failed.';
     }
 
     async function runEmbed() {
       const msg = document.getElementById('ops-input').value;
-      const res = await fetch('http://127.0.0.1:8000/embed', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: msg, id: 'custom_rule' })
+      const token = getTokenOrRedirect();
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/embed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ text: msg, id: 'custom_rule' })
       });
       const data = await res.json();
       document.getElementById('ops-output').textContent = JSON.stringify(data, null, 2);
@@ -76,11 +117,19 @@
 
     async function runDashboard() {
       const msg = document.getElementById('ops-input').value;
-      const res = await fetch('http://127.0.0.1:8000/chef-dashboard', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg })
+      const token = getTokenOrRedirect();
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/chef-dashboard`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: msg })
       });
       const data = await res.json();
-      document.getElementById('ops-output').textContent = data.dashboard;
+      document.getElementById('ops-output').textContent = data.dashboard || data.detail || 'Request failed.';
     }
   </script>
 </body>

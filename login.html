@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX // Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">47-&-SIX</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="portal.html">Portal</a>
+      <a href="index.html#portal">Client Access</a>
+    </div>
+  </nav>
+
+  <main class="page-main">
+    <header class="page-header">
+      <h1>Login</h1>
+      <p>Sign in to access the private portal and internal chef operations tools.</p>
+    </header>
+
+    <section class="form-panel">
+      <div class="form-group">
+        <label for="login-username">Username</label>
+        <input id="login-username" type="text" placeholder="admin" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="Enter password" autocomplete="current-password" />
+      </div>
+
+      <div class="page-grid page-grid-2">
+        <button class="button-primary" type="button" onclick="handleLogin()">SIGN IN</button>
+        <button class="button-primary" type="button" onclick="handleGoogleLogin()">SIGN IN WITH GOOGLE</button>
+        <button class="button-secondary" type="button" onclick="handleLogout()">SIGN OUT</button>
+      </div>
+
+      <pre id="login-output" style="margin-top:24px; background:#090909; color:#f1f1f1; padding:24px; border-radius:8px; white-space:pre-wrap;"></pre>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand">47-&-SIX</div>
+    <p>Authentication gateway for chef, dashboard, and operations workflows.</p>
+  </footer>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    const TOKEN_KEY = 'auth_token';
+    const USERNAME_KEY = 'auth_username';
+    const ROLES_KEY = 'auth_roles';
+    const EXPIRES_KEY = 'auth_expires_at';
+
+    function output(message) {
+      document.getElementById('login-output').textContent = message;
+    }
+
+    function saveSession(payload, username) {
+      localStorage.setItem(TOKEN_KEY, payload.access_token);
+      localStorage.setItem(USERNAME_KEY, username);
+      localStorage.setItem(ROLES_KEY, JSON.stringify(payload.roles || []));
+      localStorage.setItem(EXPIRES_KEY, String(payload.expires_at || ''));
+    }
+
+    function clearSession() {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USERNAME_KEY);
+      localStorage.removeItem(ROLES_KEY);
+      localStorage.removeItem(EXPIRES_KEY);
+    }
+
+    function getRedirectTarget() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('next') || 'portal.html';
+    }
+
+    function handleGoogleLogin() {
+      const target = new URL(getRedirectTarget(), window.location.href).toString();
+      window.location.href = `${API_BASE}/auth/google/start?next=${encodeURIComponent(target)}`;
+    }
+
+    function consumeOAuthFragment() {
+      const hash = window.location.hash || '';
+      if (!hash.startsWith('#oauth=1&')) {
+        return false;
+      }
+
+      const fragment = new URLSearchParams(hash.replace('#', ''));
+      const accessToken = fragment.get('access_token') || '';
+      const expiresAt = Number(fragment.get('expires_at') || '0');
+      const username = fragment.get('username') || 'google-user';
+      const rolesRaw = fragment.get('roles') || '';
+      const roles = rolesRaw ? rolesRaw.split(',').map(r => r.trim()).filter(Boolean) : [];
+
+      if (!accessToken) {
+        return false;
+      }
+
+      saveSession(
+        {
+          access_token: accessToken,
+          expires_at: expiresAt,
+          roles
+        },
+        username
+      );
+
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+      output(`Signed in with Google as ${username}. Redirecting to ${getRedirectTarget()}...`);
+      window.setTimeout(() => {
+        window.location.href = getRedirectTarget();
+      }, 500);
+      return true;
+    }
+
+    function showCurrentSession() {
+      const username = localStorage.getItem(USERNAME_KEY);
+      const expiresAt = localStorage.getItem(EXPIRES_KEY);
+      if (!username) {
+        output('Not signed in. Use admin / change-me-now for local testing.');
+        return;
+      }
+      output(`Signed in as ${username}. Token expires at ${expiresAt || 'unknown'}.`);
+    }
+
+    async function handleLogin() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!username || !password) {
+        output('Enter both username and password.');
+        return;
+      }
+
+      output('Signing in...');
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.access_token) {
+          output(data.detail || `Login failed with status ${res.status}.`);
+          return;
+        }
+
+        saveSession(data, username);
+        output(`Signed in as ${username}. Redirecting to ${getRedirectTarget()}...`);
+        window.setTimeout(() => {
+          window.location.href = getRedirectTarget();
+        }, 700);
+      } catch (err) {
+        output(`Login error: ${err.message}`);
+      }
+    }
+
+    function handleLogout() {
+      clearSession();
+      output('Signed out.');
+    }
+
+    if (!consumeOAuthFragment()) {
+      showCurrentSession();
+    }
+  </script>
+</body>
+</html>
