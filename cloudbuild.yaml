@@ -1,0 +1,52 @@
+steps:
+  # Step 1: Install dependencies
+  - name: 'python:3.11'
+    entrypoint: pip
+    args: ['install', '-r', 'requirements.txt', '-r', 'requirements-dev.txt']
+    waitFor: ['-']
+
+  # Step 2: Run pytest
+  - name: 'python:3.11'
+    entrypoint: pytest
+    args: 
+      - 'tests/'
+      - '-v'
+      - '--tb=short'
+      - '--junit-xml=${BUILD_ARTIFACTS_LOCATION}/test-results.xml'
+
+  # Step 3: Run linting (optional)
+  - name: 'python:3.11'
+    entrypoint: pip
+    args: ['install', 'pylint']
+    waitFor: ['pip-install']
+
+  - name: 'python:3.11'
+    entrypoint: pylint
+    args:
+      - 'agents/'
+      - 'core/'
+      - 'chef_knowledge/'
+      - '--exit-zero'
+
+# Build artifacts
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID-build-artifacts/test-results/'
+    paths: ['${BUILD_ARTIFACTS_LOCATION}/test-results.xml']
+
+# Timeout for build
+timeout: '1800s'
+
+# Options
+options:
+  machineType: 'N1_HIGHCPU_8'
+
+# Substitute variables
+substitutions:
+  _PYTHON_VERSION: '3.11'
+
+# Tags for organization
+tags:
+  - 'gcp-cloud-build'
+  - 'ronin-agents'
+  - 'ci-cd'
