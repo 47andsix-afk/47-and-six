@@ -219,9 +219,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         orchestrator = AgentOrchestrator(registry, gemini)
         app.state.orchestrator = orchestrator
 
-        if chat_router is not None:
-            chat_router.state.orchestrator = orchestrator
-
     if os.getenv("BUILD_INDEX_ON_STARTUP", "false").lower() in ("1", "true", "yes"):
         try:
             build_index()
