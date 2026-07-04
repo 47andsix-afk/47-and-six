@@ -1,66 +1,112 @@
-# 47-&-SIX Concierge
+# 47-&-SIX Chef Operations Intelligence Platform
 
-A private chef and catering platform with a FastAPI backend, Gemini AI orchestration, ChromaDB knowledge search, and static chef-themed frontend pages.
+Vertical AI infrastructure for private chef and catering operations.
 
-## Overview
+This repository combines:
 
-This project is built around a single FastAPI entrypoint (`main.py`) that exposes:
+- FastAPI backend for operational APIs
+- Multi-agent orchestration for specialized workflows
+- Chef knowledge indexing/search over local documents
+- Willow explainability and Operating Mirror simulation
+- Static task-focused frontend pages
+- Role-based auth, test coverage, and deployment wiring
 
-- `/agents/*` for specialized agent workflows
-- `/chat` for direct AI concierge interactions
-- `/chef-dashboard`, `/menu-cost`, `/event-planning`, `/inventory` for operational support
-- `/chef/credentials` and `/chef/knowledge/*` for internal profile and knowledge inspection
-- `/embed` for embedding text into ChromaDB
+## Product Summary
 
-The backend uses Google Gemini with optional mock fallback and supports local ChromaDB embedding storage.
+This is not a generic chatbot project.
 
-## Architecture
+It is a chef operations system designed to support:
 
-- `main.py` — single FastAPI app, middleware, route definitions, and startup logic.
-- `agents/` — modular agent implementations and a small RONIN task router.
-- `chef_knowledge/` — index building, file loading, and knowledge router for chef training data.
-- Static frontend pages (`index.html`, `dashboard.html`, etc.) plus shared `style.css` and `script.js`.
+1. Menu planning and costing
+2. Event planning and execution prep
+3. Inventory and operational readiness
+4. Decision explainability and reverse engineering
+5. Long-term decision memory and scenario simulation
 
-## Key Components
+## Current Architecture
 
-### Backend
+- `main.py`: API entrypoint, auth, route registration, lifecycle wiring
+- `agents/`: specialized agent modules + orchestrator + registry
+- `core/`: model config and Gemini function-calling wrapper
+- `chef_knowledge/`: loader, embeddings, indexer, knowledge routes
+- `willow/`: explainability + operating mirror models, engine, persistence, routes
+- `tests/`: unit, integration, contract, auth, and performance guard tests
+- static frontend: `index.html`, `dashboard.html`, `menu_builder.html`, `event_booking.html`, `inventory.html`, `operations_console.html`
 
-- `FastAPI` for request routing
-- `CORS` middleware enabled for local frontend access
-- `google-genai` and `google-ai-generativelanguage` for Gemini generation and embeddings
-- `chromadb` for local operational and chef knowledge vector search
-- `python-dotenv` for environment configuration
+## Key Backend Capabilities
 
-### Frontend
+### Core API and Auth
 
-- `script.js` provides API helper functions for agents and chef knowledge routes
-- static HTML pages use shared navigation and theme styling
+- JWT-style auth with roles (`viewer`, `chef`, `admin`)
+- protected operational endpoints
+- graceful dependency fallback behavior (503 where subsystem is unavailable)
 
-### Agent System
+### Agentic Operations
 
-- `/agents/concierge` — fused concierge agent with contextual operational reasoning
-- `/agents/ops`, `/agents/logistics`, `/agents/economics`, `/agents/compliance` — specialized agent endpoints
-- `/agents/memory` — local context retrieval from ChromaDB
-- `/agents/menu-costing`, `/agents/recipe`, `/agents/client-intake`, `/agents/menu-pricing` — task-specific RONIN-style workflows
-- `/agents/ronin` — task switchboard for quick agent dispatch
+- orchestrator with:
+  - Gemini-selected function calls
+  - parallel execution
+  - chained execution with dependency references
+- domain agent modules for chef, ops, and menu workflows
+
+### Chef Knowledge
+
+- file loading and extraction
+- deterministic embedding fallback
+- ChromaDB persistence when available
+- knowledge routes:
+  - `GET /chef/knowledge/files`
+  - `GET /chef/knowledge/portfolio`
+  - `POST /chef/knowledge/search`
+
+### Willow Explainability
+
+- `POST /willow/explain`
+- reversible traces
+- counterfactual analysis
+- uncertainty map
+- branch amplitudes
+- causal graph output
+
+### Willow Operating Mirror (v0.2)
+
+Durable, seeded, simulation-ready subsystem with SQLite persistence.
+
+Implemented endpoints:
+
+- `GET /willow/operating-mirror/graph`
+- `POST /willow/operating-mirror/graph`
+- `POST /willow/operating-mirror/graph/seed?overwrite=false|true`
+- `POST /willow/operating-mirror/simulate`
+- `POST /willow/operating-mirror/reverse-engineer`
+- `GET /willow/operating-mirror/dashboard`
+- `POST /willow/operating-mirror/decision-ledger`
+- `GET /willow/operating-mirror/decision-ledger/{decision_id}`
+
+Operating Mirror persistence tables:
+
+- `operating_mirror_graphs`
+- `operating_mirror_simulations`
+- `operating_mirror_dashboard_snapshots`
+- `operating_mirror_decisions`
+- `operating_mirror_reverse_reviews`
 
 ## Setup
 
-1. Clone the repository.
-2. Create and activate a Python venv.
+1. Create and activate virtual environment.
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-3. Install dependencies.
+2. Install dependencies.
 
 ```powershell
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.txt -r requirements-dev.txt
 ```
 
-4. Create a `.env` file with:
+3. Create `.env`.
 
 ```env
 GEMINI_API_KEY=your_api_key_here
@@ -71,208 +117,87 @@ JWT_SECRET_KEY=replace-with-a-long-random-secret
 JWT_EXPIRE_MINUTES=120
 CHROMA_DB_PATH=./chroma_db
 SCHOOL_DIR=./chef_knowledge_data
+OPERATING_MIRROR_DB_PATH=./chroma_db/operating_mirror.db
 
-# Option 1: single bootstrap account
+# Option A: bootstrap single account
 AUTH_USERNAME=admin
 AUTH_PASSWORD=change-me-now
 AUTH_ROLES=admin
 
-# Option 2 (recommended): multiple accounts and roles as JSON
+# Option B: multiple role accounts
 # AUTH_USERS_JSON=[{"username":"admin","password":"change-me-now","roles":["admin"]},{"username":"chef","password":"change-me-now","roles":["chef"]},{"username":"viewer","password":"change-me-now","roles":["viewer"]}]
 ```
 
-## Running Locally
-
-> NOTE: The active source folder for this project is `C:\Users\jesse\workspace`.
-> If your editor is opened on `C:\Users\jesse\47andsix-backend`, you are looking at the wrong workspace.
+## Run Locally
 
 ```powershell
-uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+uvicorn main:app --app-dir D:\workspace\repos\workspace --host 127.0.0.1 --port 8000 --reload
 ```
 
-Then open `index.html` or the other static pages in a browser.
+Run tests:
 
-## API Endpoints
-
-### General
-
-- `GET /` — health check
-- `GET /chef/credentials` — static chef profile data
-- `POST /auth/login` — returns JWT bearer token
-- `GET /auth/me` — returns current authenticated user and roles
-
-### Agent namespace
-
-- `POST /agents/concierge`
-- `POST /agents/ops`
-- `POST /agents/logistics`
-- `POST /agents/economics`
-- `POST /agents/compliance`
-- `POST /agents/memory`
-- `POST /agents/menu-costing`
-- `POST /agents/recipe`
-- `POST /agents/client-intake`
-- `POST /agents/menu-pricing`
-- `POST /agents/ronin`
-
-### AI utilities
-
-- `POST /chat` — direct Gemini concierge conversation
-- `POST /image` — generate image prompt text
-- `POST /json` — request structured JSON output from Gemini
-- `POST /tools` — tool-oriented operational assistance
-- `POST /embed` — embed text into local ChromaDB
-
-## Authentication and Roles
-
-The API now uses JWT bearer tokens with role-based access control.
-
-- `viewer` can access chef profile and chef knowledge inspection routes.
-- `chef` can access operational AI routes and all `/agents/*` routes.
-- `admin` has full access, including `/embed`.
-
-Login flow:
-
-1. `POST /auth/login` with JSON body:
-
-```json
-{
-	"username": "admin",
-	"password": "change-me-now"
-}
+```powershell
+python -m pytest -q
 ```
 
-2. Use `Authorization: Bearer <access_token>` on protected routes.
+Optional marker runs:
 
-Protected routes include:
-
-- all `/agents/*`
-- `/chef-dashboard`
-- `/embed`
-- `/chat`, `/image`, `/json`, `/tools`, `/menu-cost`, `/event-planning`, `/inventory`
-- `/chef/credentials` and `/chef/knowledge/*`
-
-### Operations support
-
-- `POST /menu-cost`
-- `POST /event-planning`
-- `POST /inventory`
-- `POST /chef-dashboard`
-
-### Chef knowledge
-
-- `GET /chef/knowledge/files`
-- `GET /chef/knowledge/portfolio`
-
-## Chef Knowledge Data
-
-The chef knowledge system loads training documents from `chef_knowledge/loader.py`.
-Supported file formats:
-
-- `.docx`
-- `.pdf`
-- `.odt`
-- plain text fallback
-
-The knowledge index is persisted in `chroma_db` and accessed through `/chef/knowledge/*` endpoints.
-
-## Notes
-
-- The backend is intentionally resilient if Gemini or ChromaDB are unavailable.
-- `USE_MOCK_RESPONSES=true` enables a safe development fallback.
-- `BUILD_INDEX_ON_STARTUP=true` triggers knowledge index refresh at startup.
-
-## Recommended Deployment
-
-- Use a process manager such as `uvicorn` behind a reverse proxy.
-- Keep `GEMINI_API_KEY` secure.
-- Store persistent ChromaDB data outside ephemeral containers.
-- For production, set `USE_MOCK_RESPONSES=false` and use a stable Gemini model.
-
-## Deploy From GitHub (Backend)
-
-This repo is now configured for platform-backed persistent paths via:
-
-- `CHROMA_DB_PATH` for ChromaDB persistence
-- `SCHOOL_DIR` for chef knowledge source files
-
-### Render (recommended)
-
-1. Push this repo to GitHub.
-2. In Render, create a new **Web Service** from the repo.
-3. Use:
-
-```text
-Build Command: pip install -r requirements.txt
-Start Command: gunicorn main:app -k uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:$PORT
+```powershell
+python -m pytest -q -m "not perf"
+python -m pytest -q -m perf
 ```
 
-4. Add environment variables:
+## Frontend Usage
 
-```env
-GEMINI_API_KEY=...
-JWT_SECRET_KEY=...
-AUTH_USERS_JSON=[{"username":"admin","password":"change-me-now","roles":["admin"]}]
-BUILD_INDEX_ON_STARTUP=true
-CHROMA_DB_PATH=/var/chroma_db
-SCHOOL_DIR=/var/chef_knowledge_data
-USE_MOCK_RESPONSES=false
-```
+Pages are static and call the API at `http://127.0.0.1:8000` by default.
 
-5. Add persistent disks:
+Shared API helper is in `script.js` and supports:
 
-```text
-/var/chroma_db
-/var/chef_knowledge_data
-```
+- runtime base URL override with `window.__API_BASE__`
+- stored base URL via `setApiBase(...)`
+- bearer token management for protected routes
 
-6. Deploy. Every GitHub push will auto-redeploy.
+## Quality Baseline
 
-Optional: You can use the included `render.yaml` to blueprint this setup.
+Current suite includes:
 
-### Railway
+- app smoke
+- orchestrator behavior
+- chef knowledge behavior
+- willow logic and API integration
+- auth negative paths and schema contracts
+- openapi contract checks
+- operating mirror flow tests
 
-1. New Project -> Deploy from GitHub.
-2. Add a `Procfile` containing:
+## Deployment
 
-```text
-web: gunicorn main:app -k uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:$PORT
-```
+- Render config: `render.yaml`
+- Cloud Build config: `cloudbuild.yaml`
+- Process start profile: `Procfile`
 
-3. Set env vars:
+Recommended production settings:
 
-```env
-GEMINI_API_KEY=...
-JWT_SECRET_KEY=...
-AUTH_USERS_JSON=[{"username":"admin","password":"change-me-now","roles":["admin"]}]
-BUILD_INDEX_ON_STARTUP=true
-CHROMA_DB_PATH=/data/chroma_db
-SCHOOL_DIR=/data/chef_knowledge_data
-USE_MOCK_RESPONSES=false
-```
+1. Keep `USE_MOCK_RESPONSES=false`
+2. Set strong `JWT_SECRET_KEY`
+3. Persist `CHROMA_DB_PATH` and Operating Mirror DB path
+4. Secure API keys via provider secret manager
 
-4. Add a volume and mount it to `/data` (or directly to both folders).
+## Product Direction
 
-5. Deploy. GitHub pushes auto-redeploy.
+The current milestone is **Operating Mirror v0.2**:
 
-### Frontend Wiring (Vercel -> Backend)
+- durable causal graph state
+- seedable default graph
+- deterministic simulation with causal path tracing
+- richer dashboard schema (`top_causal_paths`, `risk_panel`, `recommended_actions`)
+- reverse-engineering root-cause ranking with recommended fixes
 
-After backend deploy, point frontend API base URL to your live backend domain and call with bearer token.
+Next planned direction:
 
-Frontend helper options now supported by `script.js`:
+1. simulation/review retrieval endpoints by ID and query filters
+2. longitudinal dashboard reporting
+3. tighter causal-path assertions and calibration tooling
 
-- Set `window.__API_BASE__ = "https://your-backend.onrender.com"` before loading `script.js`
-- or call `setApiBase("https://your-backend.onrender.com")` at runtime (stored in localStorage)
+## License / Ownership
 
-Example:
-
-```javascript
-fetch("https://your-backend.onrender.com/agents/ronin", {
-	method: "POST",
-	headers: {
-		"Content-Type": "application/json",
-		"Authorization": `Bearer ${token}`
-	},
-	body: JSON.stringify({ task: "ops", message: "run schedule" })
-});
-```
+Internal project for 47-&-SIX operations platform development.

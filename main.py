@@ -35,6 +35,32 @@ from dotenv import load_dotenv
 load_dotenv()
 
 try:
+    from agents.chef_agent import ChefAgent
+    from agents.menu_agent import MenuAgent
+    from agents.ops_agent import OpsAgent
+    from agents.orchestrator import Orchestrator as AgentOrchestrator
+    from agents.registry import AgentRegistry
+    from chat import router as chat_router
+    from core.config import settings as core_settings
+    from core.gemini_client import GeminiClient as OrchestratorGeminiClient
+    from memory import router as memory_router
+except ImportError:
+    ChefAgent = None
+    MenuAgent = None
+    OpsAgent = None
+    AgentOrchestrator = None
+    AgentRegistry = None
+    chat_router = None
+    core_settings = None
+    OrchestratorGeminiClient = None
+    memory_router = None
+
+try:
+    from willow.router import router as willow_router
+except ImportError:
+    willow_router = None
+
+try:
     from chef_knowledge.indexer import build_index
     from chef_knowledge.router import router as chef_knowledge_router
 except ImportError:
@@ -176,6 +202,26 @@ if chromadb is not None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    if (
+        AgentRegistry is not None
+        and ChefAgent is not None
+        and OpsAgent is not None
+        and MenuAgent is not None
+        and AgentOrchestrator is not None
+        and OrchestratorGeminiClient is not None
+        and core_settings is not None
+    ):
+        gemini = OrchestratorGeminiClient(api_key=core_settings.GEMINI_API_KEY)
+        registry = AgentRegistry()
+        registry.register(ChefAgent())
+        registry.register(OpsAgent())
+        registry.register(MenuAgent())
+        orchestrator = AgentOrchestrator(registry, gemini)
+        app.state.orchestrator = orchestrator
+
+        if chat_router is not None:
+            chat_router.state.orchestrator = orchestrator
+
     if os.getenv("BUILD_INDEX_ON_STARTUP", "false").lower() in ("1", "true", "yes"):
         try:
             build_index()
@@ -268,15 +314,23 @@ async def _generate_text_async(
 
 
 def _load_runtime_attr(module_name: str, attr_name: str, feature_name: str) -> Any:
+    detail = f"{feature_name} is unavailable in this build"
     try:
         module = importlib.import_module(module_name)
     except ImportError as exc:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"{feature_name} is unavailable in this build") from exc
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detail) from exc
 
     try:
         return getattr(module, attr_name)
     except AttributeError as exc:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"{feature_name} is unavailable in this build") from exc
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detail) from exc
+
+
+def _missing_feature(feature_name: str) -> None:
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=f"{feature_name} is unavailable in this build",
+    )
 
 
 class Inquiry(BaseModel):
@@ -451,6 +505,33 @@ async def memory_route(payload: dict):
     return {"reply": result}
 
 
+@agent_router.post("/run")
+async def run_agents(payload: dict = Body(...)):
+    orchestrator = getattr(app.state, "orchestrator", None)
+    if orchestrator is None:
+        _missing_feature("agent orchestrator")
+
+    user_input = payload.get("user_input", "")
+    chaining_plan = payload.get("chaining_plan")
+    return await orchestrator.run(user_input=user_input, chaining_plan=chaining_plan)
+
+
+@agent_router.post("/willow")
+async def willow_mode(payload: dict = Body(...)):
+    run_willow_mode = _load_runtime_attr("agents.willow_mode", "run_willow_mode", "willow mode")
+
+    objective = payload.get("objective", "")
+    assumptions = payload.get("assumptions", [])
+    evidence = payload.get("evidence", [])
+    max_counterfactuals = int(payload.get("max_counterfactuals", 3))
+    return run_willow_mode(
+        objective=objective,
+        assumptions=assumptions,
+        evidence=evidence,
+        max_counterfactuals=max_counterfactuals,
+    )
+
+
 @auth_router.post("/login", response_model=TokenResponse)
 async def login(req: LoginRequest):
     user = authenticate_user(req.username, req.password, AUTH_USERS)
@@ -467,6 +548,12 @@ async def me(user: CurrentUser = Depends(require_roles("viewer", "chef", "admin"
 
 app.include_router(agent_router)
 app.include_router(auth_router)
+if chat_router is not None:
+    app.include_router(chat_router)
+if memory_router is not None:
+    app.include_router(memory_router)
+if willow_router is not None:
+    app.include_router(willow_router)
 
 # ---------------------------------------------------------
 # API routes
@@ -519,13 +606,20 @@ def status_check():
             "/agents/economics",
             "/agents/compliance",
             "/agents/memory",
+            "/agents/run",
+            "/agents/willow",
             "/agents/menu-costing",
             "/agents/recipe",
             "/agents/client-intake",
             "/agents/menu-pricing",
             "/agents/ronin",
+            "/chat/agentic",
+            "/memory/store",
+            "/memory/all",
+            "/willow/explain",
             "/chef/knowledge/files",
             "/chef/knowledge/portfolio",
+            "/chef/knowledge/search",
         ],
         "gemini_configured": client_genai is not None,
         "chromadb_available": collection is not None,
@@ -549,22 +643,6 @@ def chef_credentials(_: CurrentUser = Depends(require_roles("viewer", "chef", "a
             "Menu engineering",
             "Operational efficiency",
         ],
-    }
-
-
-@app.get("/health")
-def health_check():
-    return {
-        "status": "ok",
-        "gemini_configured": client_genai is not None,
-        "use_mock": USE_MOCK,
-        "chromadb_available": collection is not None,
-        "model": MODEL_NAME,
-        "index_build_on_startup": os.getenv("BUILD_INDEX_ON_STARTUP", "false").lower() in ("1", "true", "yes"),
-        "quota": {
-            "used": os.getenv("GEMINI_QUOTA_USED"),
-            "limit": os.getenv("GEMINI_QUOTA_LIMIT"),
-        },
     }
 
 
@@ -723,3 +801,12 @@ async def chef_dashboard(inquiry: Inquiry, _: CurrentUser = Depends(require_role
 
 if chef_knowledge_router is not None:
     app.include_router(chef_knowledge_router)
+else:
+    @app.get("/chef/knowledge/files")
+    def chef_knowledge_files(_: CurrentUser = Depends(require_roles("viewer", "chef", "admin"))):
+        _missing_feature("chef_knowledge")
+
+
+    @app.get("/chef/knowledge/portfolio")
+    def chef_knowledge_portfolio(_: CurrentUser = Depends(require_roles("viewer", "chef", "admin"))):
+        _missing_feature("chef_knowledge")
