@@ -2,7 +2,7 @@
 // 47-and-SIX Frontend API Layer
 // ===============================
 
-const DEFAULT_API_BASE = "http://127.0.0.1:8000";
+const DEFAULT_API_BASE = "https://47andsix-backend.onrender.com";
 
 let apiBase = DEFAULT_API_BASE;
 

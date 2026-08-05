@@ -9,14 +9,15 @@ import json
 import os
 import secrets
 import time
-from typing import Any, AsyncIterator, Optional
+from typing import Any, AsyncGenerator, NoReturn, Optional
 from urllib.parse import urlencode, quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
-from fastapi import APIRouter, Body, Depends, FastAPI, Header, HTTPException, status
+from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 chromadb: Any = None
@@ -74,119 +75,13 @@ except ImportError:
 
     chef_knowledge_router = None
 
-try:
-    from core.auth import (
-        CurrentUser,
-        authenticate_user,
-        create_access_token,
-        load_auth_users,
-        require_roles,
-    )
-except ImportError:
-    class CurrentUser:
-        def __init__(self, username: str, roles: list[str]):
-            self.username = username
-            self.roles = roles
-
-
-    class _AuthRecord(CurrentUser):
-        def __init__(self, username: str, password: str, roles: list[str]):
-            super().__init__(username, roles)
-            self.password = password
-
-
-    def load_auth_users() -> list[_AuthRecord]:
-        users_json = os.getenv("AUTH_USERS_JSON")
-        if users_json:
-            try:
-                parsed = json.loads(users_json)
-                return [
-                    _AuthRecord(
-                        username=item["username"],
-                        password=item["password"],
-                        roles=list(item.get("roles", [])),
-                    )
-                    for item in parsed
-                ]
-            except (KeyError, TypeError, json.JSONDecodeError):
-                return []
-
-        username = os.getenv("AUTH_USERNAME")
-        password = os.getenv("AUTH_PASSWORD")
-        roles = [role.strip() for role in os.getenv("AUTH_ROLES", "admin").split(",") if role.strip()]
-        if username and password:
-            return [_AuthRecord(username=username, password=password, roles=roles or ["admin"])]
-        return []
-
-
-    def authenticate_user(username: str, password: str, users: list[_AuthRecord]) -> Optional[CurrentUser]:
-        for user in users:
-            if user.username == username and user.password == password:
-                return CurrentUser(user.username, user.roles)
-        return None
-
-
-    def _auth_secret() -> str:
-        return os.getenv("JWT_SECRET_KEY", "development-secret-change-me")
-
-
-    def _encode_token(payload: dict[str, Any]) -> str:
-        raw_payload = json.dumps(payload, separators=(",", ":")).encode("utf-8")
-        encoded_payload = base64.urlsafe_b64encode(raw_payload).decode("ascii").rstrip("=")
-        signature = hmac.new(_auth_secret().encode("utf-8"), encoded_payload.encode("ascii"), hashlib.sha256).hexdigest()
-        return f"{encoded_payload}.{signature}"
-
-
-    def _decode_token(token: str) -> Optional[CurrentUser]:
-        try:
-            encoded_payload, signature = token.split(".", 1)
-        except ValueError:
-            return None
-
-        expected_signature = hmac.new(
-            _auth_secret().encode("utf-8"),
-            encoded_payload.encode("ascii"),
-            hashlib.sha256,
-        ).hexdigest()
-        if not hmac.compare_digest(signature, expected_signature):
-            return None
-
-        padded_payload = encoded_payload + "=" * (-len(encoded_payload) % 4)
-        try:
-            payload = json.loads(base64.urlsafe_b64decode(padded_payload.encode("ascii")))
-        except (ValueError, json.JSONDecodeError):
-            return None
-
-        expires_at = int(payload.get("exp", 0))
-        if expires_at <= int(time.time()):
-            return None
-
-        username = payload.get("sub")
-        roles = payload.get("roles", [])
-        if not isinstance(username, str) or not isinstance(roles, list):
-            return None
-        return CurrentUser(username=username, roles=[str(role) for role in roles])
-
-
-    def create_access_token(username: str, roles: list[str]) -> tuple[str, int]:
-        expires_at = int(time.time()) + int(os.getenv("JWT_EXPIRE_MINUTES", "120")) * 60
-        token = _encode_token({"sub": username, "roles": roles, "exp": expires_at})
-        return token, expires_at
-
-
-    def require_roles(*allowed_roles: str):
-        async def dependency(authorization: Optional[str] = Header(default=None)) -> CurrentUser:
-            if authorization is None or not authorization.startswith("Bearer "):
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
-
-            user = _decode_token(authorization.removeprefix("Bearer ").strip())
-            if user is None:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-            if allowed_roles and not any(role in user.roles for role in allowed_roles):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role")
-            return user
-
-        return dependency
+from core.auth import (
+    CurrentUser,
+    authenticate_user,
+    create_access_token,
+    load_auth_users,
+    require_roles,
+)
 
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -221,7 +116,7 @@ if chromadb is not None:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if (
         AgentRegistry is not None
         and ChefAgent is not None
@@ -257,6 +152,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/style.css")
+async def serve_css():
+    return FileResponse("style.css")
+
+@app.get("/login.html")
+async def serve_login():
+    return FileResponse("login.html")
+
+@app.get("/class_menu.html")
+async def serve_class_menu():
+    return FileResponse("class_menu.html")
 
 # ---------------------------------------------------------
 # Helpers
@@ -383,7 +290,7 @@ def _is_model_error_response(text: str) -> bool:
 def _build_dashboard_fallback(message: str, model_error: str) -> str:
     inquiry = (message or "today's operations").strip()
     focus = inquiry[:140]
-    payload = {
+    payload: dict[str, Any] = {
         "operational_focus": f"Stabilize chef operations around: {focus}",
         "cost_risk": "medium",
         "menu_actions": [
@@ -428,7 +335,7 @@ def _load_runtime_attr(module_name: str, attr_name: str, feature_name: str) -> A
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detail) from exc
 
 
-def _missing_feature(feature_name: str) -> None:
+def _missing_feature(feature_name: str) -> NoReturn:
     raise HTTPException(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         detail=f"{feature_name} is unavailable in this build",
@@ -442,7 +349,7 @@ def _is_safe_redirect_target(value: str) -> bool:
 
 
 def _encode_google_state(next_url: str) -> str:
-    payload = {
+    payload: dict[str, Any] = {
         "next": next_url,
         "nonce": secrets.token_urlsafe(12),
         "exp": int(time.time()) + 600,
@@ -579,7 +486,7 @@ auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @agent_router.post("/ronin")
-async def ronin_route(payload: dict):
+async def ronin_route(payload: dict[str, Any]):
     run_ronin = _load_runtime_attr("agents.orchestrator", "run_ronin", "RONIN orchestrator")
     task = payload.get("task", "")
     message = payload.get("message", "")
@@ -590,7 +497,7 @@ async def ronin_route(payload: dict):
 
 
 @agent_router.post("/menu-costing")
-def menu_costing(payload: dict):
+def menu_costing(payload: dict[str, Any]):
     run_menu_costing = _load_runtime_attr("agents.menu_cost_agent", "run_menu_costing", "menu costing agent")
 
     prompt = run_menu_costing(payload.get("message", ""))
@@ -600,7 +507,7 @@ def menu_costing(payload: dict):
 
 
 @agent_router.post("/recipe")
-def recipe(payload: dict):
+def recipe(payload: dict[str, Any]):
     run_recipe = _load_runtime_attr("agents.recipe_agent", "run_recipe", "recipe agent")
 
     prompt = run_recipe(payload.get("message", ""))
@@ -610,7 +517,7 @@ def recipe(payload: dict):
 
 
 @agent_router.post("/client-intake")
-def client_intake(payload: dict):
+def client_intake(payload: dict[str, Any]):
     run_client_intake = _load_runtime_attr("agents.client_intake_agent", "run_client_intake", "client intake agent")
 
     prompt = run_client_intake(payload.get("message", ""))
@@ -620,7 +527,7 @@ def client_intake(payload: dict):
 
 
 @agent_router.post("/menu-pricing")
-def menu_pricing(payload: dict):
+def menu_pricing(payload: dict[str, Any]):
     run_menu_pricing = _load_runtime_attr("agents.menu_pricing_engine", "run_menu_pricing", "menu pricing engine")
 
     prompt = run_menu_pricing(payload.get("message", ""))
@@ -630,7 +537,7 @@ def menu_pricing(payload: dict):
 
 
 @agent_router.post("/concierge")
-async def concierge_route(payload: dict):
+async def concierge_route(payload: dict[str, Any]):
     ConciergeAgent = _load_runtime_attr("agents.concierge_agent", "ConciergeAgent", "concierge agent")
 
     message = payload.get("message", "")
@@ -648,7 +555,7 @@ async def concierge_route(payload: dict):
 
 
 @agent_router.post("/ops")
-async def ops_route(payload: dict):
+async def ops_route(payload: dict[str, Any]):
     OpsAgent = _load_runtime_attr("agents.ops_agent", "OpsAgent", "ops agent")
 
     message = payload.get("message", "")
@@ -658,7 +565,7 @@ async def ops_route(payload: dict):
 
 
 @agent_router.post("/logistics")
-async def logistics_route(payload: dict):
+async def logistics_route(payload: dict[str, Any]):
     LogisticsAgent = _load_runtime_attr("agents.logistics_agent", "LogisticsAgent", "logistics agent")
 
     message = payload.get("message", "")
@@ -668,7 +575,7 @@ async def logistics_route(payload: dict):
 
 
 @agent_router.post("/economics")
-async def economics_route(payload: dict):
+async def economics_route(payload: dict[str, Any]):
     EconomicsAgent = _load_runtime_attr("agents.economics_agent", "EconomicsAgent", "economics agent")
 
     message = payload.get("message", "")
@@ -678,7 +585,7 @@ async def economics_route(payload: dict):
 
 
 @agent_router.post("/compliance")
-async def compliance_route(payload: dict):
+async def compliance_route(payload: dict[str, Any]):
     ComplianceAgent = _load_runtime_attr("agents.compliance_agent", "ComplianceAgent", "compliance agent")
 
     message = payload.get("message", "")
@@ -688,7 +595,7 @@ async def compliance_route(payload: dict):
 
 
 @agent_router.post("/memory")
-async def memory_route(payload: dict):
+async def memory_route(payload: dict[str, Any]):
     MemoryAgent = _load_runtime_attr("agents.memory_agent", "MemoryAgent", "memory agent")
 
     message = payload.get("message", "")
@@ -698,7 +605,7 @@ async def memory_route(payload: dict):
 
 
 @agent_router.post("/run")
-async def run_agents(payload: dict = Body(...)):
+async def run_agents(payload: dict[str, Any] = Body(...)):
     orchestrator = getattr(app.state, "orchestrator", None)
     if orchestrator is None:
         _missing_feature("agent orchestrator")
@@ -709,7 +616,7 @@ async def run_agents(payload: dict = Body(...)):
 
 
 @agent_router.post("/willow")
-async def willow_mode(payload: dict = Body(...)):
+async def willow_mode(payload: dict[str, Any] = Body(...)):
     run_willow_mode = _load_runtime_attr("agents.willow_mode", "run_willow_mode", "willow mode")
 
     objective = payload.get("objective", "")
@@ -798,7 +705,7 @@ async def google_callback(code: Optional[str] = None, state: Optional[str] = Non
 
 
 @auth_router.get("/me")
-async def me(user: CurrentUser = Depends(require_roles("viewer", "chef", "admin"))):
+async def me(user: CurrentUser = Depends(require_roles("viewer", "chef", "admin"))) -> dict[str, Any]:
     return {"username": user.username, "roles": user.roles}
 
 
@@ -815,13 +722,13 @@ if willow_router is not None:
 # API routes
 # ---------------------------------------------------------
 
+
 @app.get("/")
 async def read_root():
-    return {"message": "47-&-SIX Concierge API is running"}
-
+    return FileResponse("index.html")
 
 @app.get("/health")
-def health_check():
+def health_check() -> dict[str, Any]:
     return {
         "status": "ok",
         "gemini_configured": client_genai is not None,
@@ -838,7 +745,7 @@ def health_check():
 
 
 @app.get("/status")
-def status_check():
+def status_check() -> dict[str, Any]:
     return {
         "status": "ok",
         "routes": [
@@ -887,7 +794,7 @@ def status_check():
 
 
 @app.get("/chef/credentials")
-def chef_credentials(_: CurrentUser = Depends(require_roles("viewer", "chef", "admin"))):
+def chef_credentials(_: CurrentUser = Depends(require_roles("viewer", "chef", "admin"))) -> dict[str, Any]:
     return {
         "name": "Chef Jesse",
         "title": "Executive Chef & Founder",
@@ -1081,3 +988,6 @@ else:
     @app.get("/chef/knowledge/portfolio")
     def chef_knowledge_portfolio(_: CurrentUser = Depends(require_roles("viewer", "chef", "admin"))):
         _missing_feature("chef_knowledge")
+
+
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
