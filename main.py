@@ -2,6 +2,7 @@
 import asyncio
 import base64
 from contextlib import asynccontextmanager
+from pathlib import Path
 import hashlib
 import hmac
 import importlib
@@ -14,7 +15,7 @@ from urllib.parse import urlencode, quote
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
-from fastapi import APIRouter, Body, Depends, FastAPI, HTTPException, status
+from fastapi import APIRouter, Body, Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -103,6 +104,11 @@ GOOGLE_OAUTH_DEFAULT_ROLES = [
     if role.strip()
 ] or ["chef"]
 
+USE_OLLAMA = os.getenv("USE_OLLAMA", "false").lower() in ("1", "true", "yes")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", os.getenv("JWT_SECRET_KEY", "development-secret-change-me"))
+
 client_genai = Client(api_key=API_KEY) if Client and API_KEY else None
 AUTH_USERS = load_auth_users()
 
@@ -152,6 +158,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def cache_static(request, call_next):
+    """Add caching headers for static assets to reduce flicker and improve performance."""
+    response = await call_next(request)
+    try:
+        if request.url.path.startswith("/static"):
+            response.headers["Cache-Control"] = "public, max-age=86400"
+    except Exception:
+        pass
+    return response
 
 @app.get("/style.css")
 async def serve_css():
@@ -445,6 +463,11 @@ class EmbedRequest(BaseModel):
     id: str
 
 
+class OllamaRequest(BaseModel):
+    prompt: str
+    model: Optional[str] = None
+
+
 class MenuCostRequest(BaseModel):
     ingredients: list[str]
     portions: int
@@ -536,6 +559,172 @@ def menu_pricing(payload: dict[str, Any]):
     return {"reply": _generate_text(prompt)}
 
 
+@agent_router.get("/models")
+def list_models() -> dict[str, Any]:
+    models = [
+        {"name": "gemini-2.0-flash", "type": "cloud", "enabled": client_genai is not None},
+        {"name": "llama3", "type": "local", "enabled": USE_OLLAMA},
+    ]
+    return {"models": models}
+
+
+@app.get("/gallery")
+def gallery_data() -> dict[str, Any]:
+    gallery_path = Path(__file__).parent / "gallery.json"
+    if not gallery_path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gallery data not found")
+    try:
+        return json.loads(gallery_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+
+
+@app.get("/site_data.json")
+def site_data() -> dict[str, Any]:
+    data_path = Path(__file__).parent / "site_data.json"
+    if not data_path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site data not found")
+    try:
+        return json.loads(data_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+
+
+def _load_json_data(filename: str) -> Any:
+    data_path = Path(__file__).parent / filename
+    if not data_path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{filename} not found")
+    try:
+        return json.loads(data_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+
+
+def _validate_admin_token(token: str | None) -> None:
+    if token != ADMIN_TOKEN:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin token")
+
+
+@app.get("/homepage")
+def homepage_data() -> Any:
+    return _load_json_data("data/homepage.json")
+
+
+@app.get("/menu")
+def menu_data() -> Any:
+    return _load_json_data("data/menu.json")
+
+
+@app.get("/services")
+def services_data() -> Any:
+    return _load_json_data("data/services.json")
+
+
+@app.get("/portfolio")
+def portfolio_data() -> Any:
+    return _load_json_data("data/portfolio.json")
+
+
+@app.get("/admin/gallery")
+def admin_gallery(token: str | None = Header(None, alias="token")) -> list[dict[str, Any]]:
+    _validate_admin_token(token)
+    gallery = _load_json_data("gallery.json")
+    flattened: list[dict[str, Any]] = []
+    for category in gallery.get("categories", []):
+        title = category.get("title", "")
+        for item in category.get("items", []):
+            flattened.append({
+                "id": item.get("id"),
+                "name": item.get("title"),
+                "image": item.get("src"),
+                "category": title,
+                "description": item.get("description", ""),
+                "tags": item.get("tags", []),
+            })
+    return flattened
+
+
+@app.get("/admin/gallery/raw")
+def admin_gallery_raw(token: str | None = Header(None, alias="token")) -> dict[str, Any]:
+    _validate_admin_token(token)
+    return _load_json_data("gallery.json")
+
+
+@app.post("/admin/gallery/update")
+def admin_gallery_update(payload: dict[str, Any], token: str | None = Header(None, alias="token")) -> dict[str, str]:
+    _validate_admin_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing gallery payload")
+    gallery_path = Path(__file__).parent / "gallery.json"
+    gallery_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return {"status": "ok"}
+
+
+@app.post("/admin/portfolio/add")
+def admin_portfolio_add(item: dict[str, Any], token: str | None = Header(None, alias="token")) -> dict[str, str]:
+    _validate_admin_token(token)
+    portfolio_path = Path(__file__).parent / "data" / "portfolio.json"
+    portfolio = _load_json_data("data/portfolio.json")
+    portfolio.append(item)
+    portfolio_path.write_text(json.dumps(portfolio, indent=2), encoding="utf-8")
+    return {"status": "added"}
+
+
+@app.post("/admin/gallery/add")
+def admin_gallery_add(payload: dict[str, Any], token: str | None = Header(None, alias="token")) -> dict[str, str]:
+    _validate_admin_token(token)
+    name = payload.get("name")
+    image = payload.get("image")
+    category_label = payload.get("category", "Uncategorized").strip() or "Uncategorized"
+    if not name or not image:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing name or image")
+    gallery_path = Path(__file__).parent / "gallery.json"
+    gallery = _load_json_data("gallery.json")
+    category_id = category_label.lower().replace(" ", "-")
+    category = next(
+        (c for c in gallery.get("categories", []) if c.get("id") == category_id or c.get("title", "").lower() == category_label.lower()),
+        None,
+    )
+    if category is None:
+        category = {"id": category_id, "title": category_label, "description": "", "items": []}
+        gallery.setdefault("categories", []).append(category)
+    item_id = f"admin-{int(time.time() * 1000)}"
+    category.setdefault("items", []).append({
+        "id": item_id,
+        "title": name,
+        "src": image,
+        "alt": name,
+        "tags": [],
+        "description": "",
+    })
+    gallery_path.write_text(json.dumps(gallery, indent=2), encoding="utf-8")
+    return {"status": "ok", "id": item_id}
+
+
+@app.post("/admin/gallery/remove")
+def admin_gallery_remove(
+    payload: dict[str, Any] = Body(None),
+    token: str | None = Header(None, alias="token"),
+) -> dict[str, str]:
+    _validate_admin_token(token)
+    item_id = (payload or {}).get("item_id")
+    if not item_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing item_id")
+    gallery_path = Path(__file__).parent / "gallery.json"
+    gallery = _load_json_data("gallery.json")
+    removed = False
+    for category in gallery.get("categories", []):
+        original = category.get("items", [])
+        filtered = [item for item in original if item.get("id") != item_id]
+        if len(filtered) != len(original):
+            removed = True
+            category["items"] = filtered
+    if not removed:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+    gallery_path.write_text(json.dumps(gallery, indent=2), encoding="utf-8")
+    return {"status": "ok"}
+
+
 @agent_router.post("/concierge")
 async def concierge_route(payload: dict[str, Any]):
     ConciergeAgent = _load_runtime_attr("agents.concierge_agent", "ConciergeAgent", "concierge agent")
@@ -602,6 +791,74 @@ async def memory_route(payload: dict[str, Any]):
     agent = MemoryAgent(retrieve_func=_retrieve_context)
     result = await agent.retrieve(message)
     return {"reply": result}
+
+
+@agent_router.post("/ollama")
+async def ollama_route(payload: OllamaRequest):
+    model_name = payload.model or OLLAMA_MODEL
+    if model_name.startswith("gemini"):
+        if client_genai is None:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Gemini is not configured")
+        if USE_MOCK:
+            return {"reply": "Mock Gemini response."}
+        return {"reply": _generate_text(payload.prompt)}
+
+    if not USE_OLLAMA:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Ollama integration is disabled")
+
+    OllamaAgent = _load_runtime_attr("agents.ollama_agent", "OllamaAgent", "Ollama agent")
+    agent = OllamaAgent(host=OLLAMA_HOST, model=model_name)
+    if USE_MOCK:
+        return {"reply": f"Mock response for model {model_name}."}
+    result = await agent.call_function("generate", prompt=payload.prompt)
+    return {"reply": result.get("response", "")}
+
+
+@agent_router.post("/metadata")
+async def metadata_agent(payload: dict[str, Any]):
+    model_name = payload.get("model", "gemma")
+    text = payload.get("text")
+    if not text:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing text for metadata generation")
+
+    prompt = f"""
+Analyze the following culinary item and generate structured metadata:
+- tags (5–10)
+- alt text (1 sentence)
+- caption (1–2 sentences)
+- SEO keywords (10–15)
+- plating style (short)
+- mood (short)
+- culinary intent (short)
+
+Item:
+{text}
+
+Return JSON only.
+"""
+
+    if model_name.startswith("gemini"):
+        if client_genai is None:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Gemini is not configured")
+        if USE_MOCK:
+            return {"response": "{\"tags\": [\"mock\"], \"alt\": \"Mock alt text\", \"caption\": \"Mock caption\", \"seo\": [\"mock\"], \"plating\": \"Mock plating\", \"mood\": \"Mock mood\", \"intent\": \"Mock intent\"}"}
+        return {"response": _generate_text(prompt)}
+
+    if not USE_OLLAMA:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Ollama integration is disabled")
+
+    OllamaAgent = _load_runtime_attr("agents.ollama_agent", "OllamaAgent", "Ollama agent")
+    agent = OllamaAgent(host=OLLAMA_HOST, model=model_name)
+    if USE_MOCK:
+        return {"response": "{\"tags\": [\"mock\"], \"alt\": \"Mock alt text\", \"caption\": \"Mock caption\", \"seo\": [\"mock\"], \"plating\": \"Mock plating\", \"mood\": \"Mock mood\", \"intent\": \"Mock intent\"}"}
+
+    result = await agent.call_function("generate", prompt=prompt)
+    response_text = result.get("response", "")
+    try:
+        metadata = json.loads(response_text)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Invalid JSON returned from metadata agent")
+    return metadata
 
 
 @agent_router.post("/run")
@@ -727,6 +984,12 @@ if willow_router is not None:
 async def read_root():
     return FileResponse("index.html")
 
+
+@app.get("/{path:path}")
+async def spa_fallback(path: str):
+    """SPA history API fallback — return index.html for unknown routes so client router can handle navigation."""
+    return FileResponse("index.html")
+
 @app.get("/health")
 def health_check() -> dict[str, Any]:
     return {
@@ -772,6 +1035,8 @@ def status_check() -> dict[str, Any]:
             "/agents/economics",
             "/agents/compliance",
             "/agents/memory",
+            "/agents/models",
+            "/agents/ollama",
             "/agents/run",
             "/agents/willow",
             "/agents/menu-costing",
@@ -788,6 +1053,7 @@ def status_check() -> dict[str, Any]:
             "/chef/knowledge/search",
         ],
         "gemini_configured": client_genai is not None,
+        "ollama_configured": USE_OLLAMA,
         "chromadb_available": collection is not None,
         "use_mock": USE_MOCK,
     }

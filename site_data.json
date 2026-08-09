@@ -1,0 +1,252 @@
+{
+  "nav_links": [
+    {"href": "#hero", "label": "[00] OVERVIEW"},
+    {"href": "#foundations", "label": "[01] FOUNDATIONS"},
+    {"href": "#sourcing", "label": "[02] MENU MATRIX"},
+    {"href": "#metrics", "label": "[03] ECONOMICS"},
+    {"href": "#portal", "label": "[04] CLIENT PORTAL"},
+    {"href": "#operations", "label": "[05] OPERATIONS"},
+    {"href": "#services", "label": "[06] SERVICES"},
+    {"href": "class_menu.html", "label": "[07] CLASS MENU"},
+    {"href": "#contact", "label": "[08] CONTACT"},
+    {"href": "pic.html", "label": "[09] PLATE GALLERY"}
+  ],
+  "index": {
+    "hero": {
+      "status": "STATUS: ONLINE // ACCEPTING COMMISSIONS",
+      "title": "PRECISION CULINARY OPERATIONS",
+      "subtext": "30 Years of Mastery. 6-Minute Execution. Private chef and catering service engineered for disciplined hospitality."
+    },
+    "sections": [
+      {
+        "id": "foundations",
+        "title": "01 // FOUNDATIONS & DISCIPLINE",
+        "type": "grid-2",
+        "cards": [
+          {
+            "tag": "CU101",
+            "title": "Core Architecture",
+            "description": "Classical foundations translated into high-velocity production. Technique is the bedrock of efficiency, stripping away operational fluff to leave only precision execution."
+          },
+          {
+            "tag": "CU122",
+            "title": "Precision Patisserie",
+            "description": "Baking demands exact chemical constraints. We apply this strict, zero-tolerance approach to every layer of the 47-&-SIX kitchen."
+          }
+        ]
+      },
+      {
+        "id": "sourcing",
+        "title": "02 // SOURCING & MENU MATRIX",
+        "type": "grid-3",
+        "cards": [
+          {
+            "tag": "CU222",
+            "title": "Farm to Table",
+            "description": "Hyper-local supply chain integration. Direct sourcing optimizes flavor profiles and protects operational margins."
+          },
+          {
+            "tag": "CU132",
+            "title": "World Cuisines",
+            "description": "Global flavor profiles engineered for modular deployment across catering and elite personal chef formats."
+          },
+          {
+            "tag": "CE187",
+            "title": "Menu Management",
+            "description": "Menus built as scalable algorithms, maximizing profitability while seamlessly adapting to client dietary specifications."
+          }
+        ]
+      },
+      {
+        "id": "metrics",
+        "title": "03 // THE SIX-MINUTE ECONOMY",
+        "type": "featured",
+        "cards": [
+          {
+            "tag": "CE167",
+            "title": "Cost Control & Purchasing Engine",
+            "description": "The 6-Minute Clock Cycle is our financial heartbeat. By locking production into rigid intervals, we eliminate operational drift, optimize purchasing yields, and maintain aggressive food cost controls. This is how quality scales without bleeding margin.",
+            "progress_label": "OPERATIONAL EFFICIENCY RATING",
+            "progress_value": 68
+          }
+        ]
+      },
+      {
+        "id": "portal",
+        "title": "04 // CLIENT PORTAL",
+        "type": "mixed",
+        "intro": "CE160: Culinary Entrepreneurship deployment. Client-facing information stays here; private planning tools live behind authenticated portal access.",
+        "cards": [
+          {
+            "tag": "PUBLIC",
+            "title": "Service Overview",
+            "description": "Clients can review the culinary philosophy, production standards, and service range without seeing the internal operator workflow."
+          },
+          {
+            "tag": "PORTAL",
+            "title": "Private Access",
+            "description": "Use the secure login to reach the private portal for dashboard, menu, inventory, event planning, and console tools.",
+            "link_text": "Enter client portal",
+            "link_href": "login.html?next=portal.html"
+          }
+        ]
+      },
+      {
+        "id": "operations",
+        "title": "05 // OPERATIONS & SPECIALIZATIONS",
+        "type": "grid-2",
+        "cards": [
+          {
+            "tag": "FAMILY",
+            "title": "Private Specialization",
+            "description": "Bringing the uncompromising standards of the 47 & SIX kitchen directly to the family table. Precision execution, intimate setting.",
+            "img_src": "private-dining.png",
+            "img_alt": "47 & SIX Family Dining"
+          },
+          {
+            "tag": "MOBILE",
+            "title": "Precision Fuel",
+            "description": "Tacos, Burgers, and mobile culinary operations. Delivering high-impact flavors with strict, zero-tolerance discipline.",
+            "img_src": "precision-fuel.png",
+            "img_alt": "47 & SIX Precision Fuel Stand"
+          }
+        ]
+      },
+      {
+        "id": "services",
+        "title": "06 // SERVICES & PACKAGES",
+        "type": "grid-3",
+        "cards": [
+          {
+            "tag": "SERVICE",
+            "title": "Private Dining",
+            "description": "Curated in-home and on-site chef experiences built around guest count, service pacing, and elevated presentation."
+          },
+          {
+            "tag": "SERVICE",
+            "title": "Event Catering",
+            "description": "Professional event menus for weddings, corporate dinners, and special occasions with structured timelines and staffing plans."
+          },
+          {
+            "tag": "SERVICE",
+            "title": "Menu Consultation",
+            "description": "Menu direction, costing, and ingredient planning for clients who need clear options before committing to service."
+          },
+          {
+            "tag": "PORTFOLIO",
+            "title": "Class Menu + Plates",
+            "description": "Review the CU222 class dishes and plated examples as part of the chef training portfolio.",
+            "link_text": "Open class menu",
+            "link_href": "class_menu.html"
+          },
+          {
+            "tag": "TOOL",
+            "title": "Local Ollama",
+            "description": "Experiment with your local Ollama model directly from the portal.",
+            "link_text": "Open Ollama console",
+            "link_href": "ollama.html"
+          }
+        ]
+      },
+      {
+        "id": "process",
+        "title": "07 // PROCESS",
+        "type": "grid-3",
+        "cards": [
+          {
+            "tag": "STEP 1",
+            "title": "Inquiry",
+            "description": "Start with a quick description of your event, guest count, and any dietary needs or constraints."
+          },
+          {
+            "tag": "STEP 2",
+            "title": "Planning",
+            "description": "Review menu direction, staffing assumptions, and service logistics before anything is finalized."
+          },
+          {
+            "tag": "STEP 3",
+            "title": "Execution",
+            "description": "Confirm the service window, prepare the kitchen flow, and deliver a polished dining experience."
+          }
+        ]
+      },
+      {
+        "id": "contact",
+        "title": "08 // BOOKING & CONTACT",
+        "type": "grid-2",
+        "cards": [
+          {
+            "tag": "BOOKING",
+            "title": "Request a Consultation",
+            "description": "Send a concise request with your event date, location, guest count, and service style. Use the portal for internal planning, or contact directly for client intake.",
+            "link_text": "Email the chef",
+            "link_href": "mailto:hello@47andsix.com?subject=47-%26-SIX%20Booking%20Inquiry"
+          },
+          {
+            "tag": "DETAILS",
+            "title": "Service Area",
+            "description": "El Paso, TX and surrounding regional service radius. For private access, sign in to the portal.",
+            "link_text": "Sign in to the portal",
+            "link_href": "login.html?next=portal.html"
+          }
+        ]
+      }
+    ]
+  },
+  "class_menu": {
+    "title": "CU222 Class Menu Portfolio",
+    "tagline": "Farm to Table to Kitchen course dishes, training progression, and plated examples from class and private chef development.",
+    "story": "Cooking started early at age 7, standing on a chair to reach the stove and learn from family. The kitchen standards are simple and strict: clean cook, safe cook, consistent cook. That ethic now powers both culinary school completion and the externship phase through a private chef and catering company.",
+    "weeks": [
+      {
+        "title": "Weeks 1-4",
+        "items": ["Honey Granola", "Pan Toasted Nuts", "Dukkah", "Black Bean Burger", "French Fries", "Basted Pork Chop", "Basted Root Vegetable", "Arroz con Pollo", "Etouffee"]
+      },
+      {
+        "title": "Weeks 5-8",
+        "items": ["Vegetable en Papillote", "Fish en Papillote", "Pommes Boulangere", "Brown Butter", "Gremolata", "Cauliflower Steak", "Cauliflower Gratin", "Mornay Sauce", "Seasonal Soup", "Seasonal Quick Bread", "Crackers", "Chicken Liver Pate", "Mushroom Pate", "Mustard"]
+      },
+      {
+        "title": "Weeks 9-12",
+        "items": ["Pickled Vegetable", "Berry Jam", "Creme Fraiche", "Gravlax", "Latkes", "Chicken Confit", "Fresh Maitre d'Hotel Butter", "Farmer's Cheese", "Sirnicki", "Final Mystery Box"]
+      }
+    ],
+    "plate_slots": [
+      {"photo": "images/plates/week01-honey-granola.jpg", "caption": "Honey Granola"},
+      {"photo": "images/plates/week04-arroz-con-pollo.jpg", "caption": "Arroz con Pollo"},
+      {"photo": "images/plates/week05-fish-en-papillote.jpg", "caption": "Fish en Papillote"},
+      {"photo": "images/plates/week06-cauliflower-steak.jpg", "caption": "Cauliflower Steak"},
+      {"photo": "images/plates/week10-chicken-confit.jpg", "caption": "Chicken Confit"},
+      {"photo": "images/plates/private-chef-signature-01.jpg", "caption": "Private Chef Signature Plate"}
+    ],
+    "private_sections": [
+      {
+        "tag": "Signature",
+        "title": "Menu Direction",
+        "description": "Add your own signature items from private chef and catering service work here. Focus on dishes clients request repeatedly and dishes that show your style."
+      },
+      {
+        "tag": "Externship",
+        "title": "Current Phase",
+        "description": "Externship hours are being completed through the private chef company model, combining class discipline with live service execution."
+      }
+    ],
+    "footer": {
+      "summary": "Class foundation plus private chef execution.",
+      "note": "Update this page with your latest plated work each week."
+    }
+  },
+  "ollama": {
+    "page_title": "Ollama Prompt Interface",
+    "status_badge": "Local AI Console",
+    "description": "Send prompts directly to your local Ollama model and review responses here. Paste a bearer token if you have a valid session from the portal.",
+    "templates": [
+      {"label": "Portfolio plate description", "prompt": "Describe this plate in a professional chef portfolio style."},
+      {"label": "Menu item copy", "prompt": "Generate a concise menu item description for a plated dish with seasonal ingredients."},
+      {"label": "Kitchen briefing", "prompt": "Provide a brief operational briefing for kitchen staff based on a plated service line."},
+      {"label": "Tasting menu note", "prompt": "Translate this concept into a chef-level tasting menu note."}
+    ],
+    "note": "Use this page for local model experimentation. The endpoint is protected by chef/admin auth, so you may need a token from login before it works.",
+    "footer_link": "index.html"
+  }
+}

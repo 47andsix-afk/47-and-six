@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Private Dining",
+    "summary": "Custom menus and service for intimate client experiences.",
+    "category": "dining"
+  },
+  {
+    "name": "Event Catering",
+    "summary": "Structured catering operations for weddings, corporate events, and private occasions.",
+    "category": "catering"
+  },
+  {
+    "name": "Menu Consultation",
+    "summary": "Menu planning, costing, and ingredient strategy for profitable service.",
+    "category": "consulting"
+  },
+  {
+    "name": "Kitchen Workflow Review",
+    "summary": "Optimize line setup, prep flow, and service timing for consistent execution.",
+    "category": "consulting"
+  }
+]

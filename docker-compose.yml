@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY
+      - JWT_SECRET_KEY
+      - AUTH_USERS_JSON
+      - USE_OLLAMA=true
+      - OLLAMA_MODEL=llama3
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - BUILD_INDEX_ON_STARTUP=true
+      - CHROMA_DB_PATH=/var/chroma_db
+      - SCHOOL_DIR=/var/chef_knowledge_data
+    volumes:
+      - ./chroma_db:/var/chroma_db
+      - ./chef_knowledge_data:/var/chef_knowledge_data
+      - .:/app

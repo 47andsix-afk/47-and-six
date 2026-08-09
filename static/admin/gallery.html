@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX Admin Gallery</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    body { margin: 0; min-height: 100vh; font-family: Arial, sans-serif; background: #08101c; color: #eef2ff; }
+    .admin-shell { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    .admin-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 24px; }
+    .admin-header h1 { margin: 0; font-size: clamp(2rem, 3vw, 2.8rem); color: #f1c75a; }
+    .admin-header p { margin: 8px 0 0; color: #b8c1dc; max-width: 640px; }
+    .admin-header button { border: none; border-radius: 999px; padding: 12px 18px; background: #3b4d6b; color: #f4f6fa; cursor: pointer; }
+    .admin-grid { display: grid; gap: 22px; grid-template-columns: 320px 1fr; }
+    .panel { background: rgba(10, 17, 28, 0.96); border: 1px solid rgba(241, 199, 90, 0.16); border-radius: 24px; padding: 22px; }
+    .panel h2 { margin-top: 0; color: #f1c75a; }
+    .panel label { display: block; margin: 16px 0 6px; font-size: 0.95rem; color: #9bb3d1; }
+    .panel input, .panel select, .panel textarea { width: 100%; padding: 12px 14px; background: #08101c; border: 1px solid rgba(241, 199, 90, 0.18); border-radius: 14px; color: #eef2ff; font-size: 0.95rem; }
+    .panel button { width: 100%; border: none; border-radius: 999px; padding: 14px 18px; background: #f1c75a; color: #111; font-weight: 700; cursor: pointer; margin-top: 12px; }
+    .status { color: #aab9d0; margin-top: 16px; }
+    .gallery-list { display: grid; gap: 18px; }
+    .category-block { border: 1px solid rgba(241, 199, 90, 0.12); border-radius: 18px; overflow: hidden; }
+    .category-block header { background: rgba(241, 199, 90, 0.08); padding: 18px 22px; }
+    .category-block h3 { margin: 0 0 4px; color: #f1c75a; }
+    .category-block p { margin: 0; color: #d2dbe7; }
+    .gallery-grid { display: grid; gap: 14px; padding: 18px 22px 22px; }
+    .gallery-item { display: grid; grid-template-columns: 120px 1fr auto; gap: 14px; align-items: start; padding: 16px; background: rgba(14, 20, 28, 0.95); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
+    .item-preview img { display: block; width: 120px; height: 90px; object-fit: cover; border-radius: 14px; background: #0b0d12; }
+    .item-meta h4 { margin: 0 0 10px; font-size: 1.05rem; color: #f1c75a; }
+    .item-meta p { margin: 6px 0; color: #dfe7f2; font-size: 0.95rem; line-height: 1.4; }
+    .item-meta .caption { margin-top: 10px; color: #aab9d0; font-style: italic; }
+    .item-actions { display: grid; gap: 10px; align-self: center; }
+    .item-actions button { width: 160px; border: none; border-radius: 999px; padding: 10px 14px; background: #3b4d6b; color: #eef2ff; cursor: pointer; }
+    @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } .gallery-item { grid-template-columns: 1fr; } .item-actions { justify-self: stretch; } }
+  </style>
+</head>
+<body>
+  <div class="admin-shell">
+    <header class="admin-header">
+      <div>
+        <h1>Gallery Admin Editor</h1>
+        <p>Metadata generation, item updates, and gallery saves are protected by your stored admin token.</p>
+      </div>
+      <button id="logout-btn">Logout</button>
+    </header>
+
+    <div class="admin-grid">
+      <aside class="panel">
+        <h2>Admin Controls</h2>
+        <label for="admin-token">Admin Token</label>
+        <input id="admin-token" type="password" placeholder="Enter admin token" />
+        <button id="save-token">Save Token</button>
+        <button id="refresh-btn">Refresh Gallery</button>
+        <button id="generate-all-btn">Generate All Metadata</button>
+        <p class="status" id="status-text">Ready.</p>
+      </aside>
+
+      <main class="panel">
+        <h2>Gallery Items</h2>
+        <div id="gallery-list" class="gallery-list"></div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const tokenInput = document.getElementById('admin-token');
+    const statusText = document.getElementById('status-text');
+    const galleryList = document.getElementById('gallery-list');
+    const saveTokenBtn = document.getElementById('save-token');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const generateAllBtn = document.getElementById('generate-all-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    let galleryData = null;
+
+    const adminHeaders = () => {
+      const token = localStorage.getItem('admin_token');
+      return {
+        'Content-Type': 'application/json',
+        ...(token ? { token } : {}),
+      };
+    };
+
+    function ensureToken() {
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        window.location.href = '/static/admin/login.html';
+        return false;
+      }
+      tokenInput.value = token;
+      return true;
+    }
+
+    async function loadGallery() {
+      if (!ensureToken()) return;
+      statusText.textContent = 'Loading gallery...';
+      try {
+        const response = await fetch('/admin/gallery/raw', { headers: adminHeaders() });
+        if (!response.ok) {
+          if (response.status === 401) {
+            statusText.textContent = 'Unauthorized. Redirecting to login...';
+            window.location.href = '/static/admin/login.html';
+            return;
+          }
+          throw new Error(`Status ${response.status}`);
+        }
+        galleryData = await response.json();
+        renderGallery();
+        statusText.textContent = 'Gallery loaded.';
+      } catch (error) {
+        statusText.textContent = `Load failed: ${error.message}`;
+      }
+    }
+
+    function renderGallery() {
+      galleryList.innerHTML = '';
+      if (!galleryData?.categories?.length) {
+        galleryList.innerHTML = '<p>No gallery categories found.</p>';
+        return;
+      }
+
+      galleryData.categories.forEach((category) => {
+        const section = document.createElement('section');
+        section.className = 'category-block';
+        section.innerHTML = `
+          <header>
+            <h3>${category.title}</h3>
+            <p>${category.description || ''}</p>
+          </header>
+        `;
+
+        const grid = document.createElement('div');
+        grid.className = 'gallery-grid';
+
+        (category.items || []).forEach((item) => {
+          const card = document.createElement('div');
+          card.className = 'gallery-item';
+          card.innerHTML = `
+            <div class="item-preview">
+              <img src="${item.src}" alt="${item.alt || item.title}" loading="lazy" onerror="this.src='/static/fallback.jpg'" />
+            </div>
+            <div class="item-meta">
+              <h4>${item.title}</h4>
+              <p>${item.description || ''}</p>
+              <p><strong>Category:</strong> ${category.title}</p>
+              <p><strong>Tags:</strong> ${item.tags?.join(', ') || 'None'}</p>
+              <p class="caption">${item.caption || ''}</p>
+            </div>
+          `;
+
+          const actions = document.createElement('div');
+          actions.className = 'item-actions';
+
+          const metadataBtn = document.createElement('button');
+          metadataBtn.textContent = 'Generate Metadata';
+          metadataBtn.addEventListener('click', () => generateMetadata(category, item));
+          actions.appendChild(metadataBtn);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.textContent = 'Remove';
+          removeBtn.addEventListener('click', () => removeItem(category.id, item.id));
+          actions.appendChild(removeBtn);
+
+          card.appendChild(actions);
+          grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        galleryList.appendChild(section);
+      });
+    }
+
+    async function saveGallery() {
+      if (!galleryData) return;
+      const response = await fetch('/admin/gallery/update', {
+        method: 'POST',
+        headers: adminHeaders(),
+        body: JSON.stringify(galleryData),
+      });
+      if (!response.ok) {
+        throw new Error(`Save failed: ${response.status}`);
+      }
+    }
+
+    async function generateMetadata(category, item) {
+      if (!ensureToken()) return;
+      statusText.textContent = `Generating metadata for ${item.title}...`;
+      try {
+        const response = await fetch('/agents/metadata', {
+          method: 'POST',
+          headers: adminHeaders(),
+          body: JSON.stringify({
+            model: 'gemma',
+            text: `${item.title} — ${category.title}`,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Metadata request failed: ${response.status}`);
+        }
+        const data = await response.json();
+        item.tags = data.tags || item.tags || [];
+        item.alt = data.alt || item.alt || item.title;
+        item.caption = data.caption || item.caption || '';
+        item.seo = data.seo || item.seo || [];
+        item.plating = data.plating || item.plating || '';
+        item.mood = data.mood || item.mood || '';
+        item.intent = data.intent || item.intent || '';
+        await saveGallery();
+        statusText.textContent = 'Metadata generated and saved.';
+        renderGallery();
+      } catch (error) {
+        statusText.textContent = `Metadata generate failed: ${error.message}`;
+      }
+    }
+
+    async function generateAllMetadata() {
+      if (!galleryData?.categories?.length) return;
+      if (!confirm('Generate metadata for all gallery items?')) return;
+      for (const category of galleryData.categories) {
+        for (const item of category.items || []) {
+          await generateMetadata(category, item);
+        }
+      }
+      alert('All metadata generated.');
+    }
+
+    async function removeItem(categoryId, itemId) {
+      if (!confirm('Remove this plate from the gallery?')) return;
+      statusText.textContent = 'Removing item...';
+      try {
+        const response = await fetch('/admin/gallery/remove', {
+          method: 'POST',
+          headers: adminHeaders(),
+          body: JSON.stringify({ item_id: itemId }),
+        });
+        if (!response.ok) {
+          throw new Error(`Status ${response.status}`);
+        }
+        statusText.textContent = 'Item removed.';
+        await loadGallery();
+      } catch (error) {
+        statusText.textContent = `Remove failed: ${error.message}`;
+      }
+    }
+
+    saveTokenBtn.addEventListener('click', () => {
+      const token = tokenInput.value.trim();
+      if (!token) {
+        statusText.textContent = 'Enter a token before saving.';
+        return;
+      }
+      localStorage.setItem('admin_token', token);
+      statusText.textContent = 'Token saved.';
+      loadGallery();
+    });
+    refreshBtn.addEventListener('click', loadGallery);
+    generateAllBtn.addEventListener('click', generateAllMetadata);
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('admin_token');
+      window.location.href = '/static/admin/login.html';
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (ensureToken()) {
+        loadGallery();
+      }
+    });
+  </script>
+</body>
+</html>

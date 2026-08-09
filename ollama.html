@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX Local Ollama Console</title>
+  <style>
+    body {
+      margin: 0;
+      background: #10131a;
+      color: #f2f5fb;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      margin-bottom: 4px;
+      font-size: clamp(2rem, 3vw, 2.6rem);
+    }
+    p {
+      color: #b8c1dc;
+      line-height: 1.6;
+    }
+    .controls,
+    .response {
+      margin-top: 20px;
+      border: 1px solid #2a3040;
+      border-radius: 18px;
+      padding: 18px;
+      background: #141821;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+      color: #a6afbd;
+    }
+    select,
+    textarea,
+    input {
+      width: 100%;
+      border: 1px solid #2a3040;
+      border-radius: 12px;
+      background: #131822;
+      color: #eef2ff;
+      font-size: 1rem;
+      padding: 12px 14px;
+      outline: none;
+    }
+    textarea {
+      min-height: 160px;
+      resize: vertical;
+    }
+    .row {
+      display: grid;
+      gap: 14px;
+    }
+    .row.two {
+      grid-template-columns: 1fr 1fr;
+    }
+    button {
+      margin-top: 12px;
+      padding: 14px 22px;
+      border: none;
+      border-radius: 999px;
+      background: #f6b74a;
+      color: #111;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .small {
+      font-size: 0.92rem;
+      color: #8692b0;
+      margin-top: 8px;
+    }
+    .note {
+      margin-top: 10px;
+      color: #d7e0ff;
+    }
+    .badge {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #1f2431;
+      color: #9fb4d4;
+      font-size: 0.85rem;
+      margin-right: 8px;
+    }
+    a {
+      color: #f6b74a;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="wrap">
+    <div>
+      <div class="badge" id="status-badge">Local AI Console</div>
+      <h1 id="page-title">Ollama Prompt Interface</h1>
+      <p id="page-description">Send prompts directly to your local Ollama model and review responses here. Paste a bearer token if you have a valid session from the portal.</p>
+    </div>
+
+    <section class="controls">
+      <div class="row two">
+        <div>
+          <label for="model">Model</label>
+          <select id="model"></select>
+        </div>
+        <div>
+          <label for="token">Bearer Token</label>
+          <input id="token" type="text" placeholder="paste bearer token here" />
+          <div class="small">Save your token for future requests.</div>
+        </div>
+      </div>
+
+      <div class="row two">
+        <div>
+          <label for="template">Template</label>
+          <select id="template"></select>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 10px;">
+          <button id="load-template" type="button">Load Template</button>
+        </div>
+      </div>
+
+      <label for="prompt">Prompt</label>
+      <textarea id="prompt" placeholder="Enter your Ollama prompt here..."></textarea>
+      <button id="submit">Send to Ollama</button>
+      <div class="note" id="status">Loading available models...</div>
+    </section>
+
+    <section class="response">
+      <h2>Response</h2>
+      <pre id="output" style="white-space: pre-wrap; margin: 0; color: #e6ebff;"></pre>
+    </section>
+
+    <p class="small" id="page-note">Use this page for local model experimentation. The endpoint is protected by chef/admin auth, so you may need a token from login before it works.</p>
+    <p class="small"><a id="home-link" href="index.html">Back to home</a></p>
+  </main>
+
+  <div id="footer"></div>
+
+  <script>
+    fetch('/static/components/nav.html')
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById('nav').innerHTML = html;
+        const toggle = document.getElementById('dark-toggle');
+        if (toggle) toggle.onclick = () => document.body.classList.toggle('dark');
+      });
+
+    fetch('/static/components/footer.html')
+      .then(r => r.text())
+      .then(html => document.getElementById('footer').innerHTML = html);
+  </script>
+
+  <script>
+    const pageConfigUrl = '/site_data.json';
+    const modelSelect = document.getElementById('model');
+    const tokenInput = document.getElementById('token');
+    const promptInput = document.getElementById('prompt');
+    const submitButton = document.getElementById('submit');
+    const statusLabel = document.getElementById('status');
+    const output = document.getElementById('output');
+    const templateSelect = document.getElementById('template');
+    const loadTemplateButton = document.getElementById('load-template');
+    const statusBadge = document.getElementById('status-badge');
+    const pageTitle = document.getElementById('page-title');
+    const pageDescription = document.getElementById('page-description');
+    const pageNote = document.getElementById('page-note');
+    const homeLink = document.getElementById('home-link');
+
+    const savedToken = localStorage.getItem('ollama_token');
+    if (savedToken) {
+      tokenInput.value = savedToken;
+    }
+
+    function populateTemplates(templates) {
+      templateSelect.innerHTML = '<option value="">Select a prompt template</option>';
+      templates.forEach((template) => {
+        const option = document.createElement('option');
+        option.value = template.prompt;
+        option.textContent = template.label;
+        templateSelect.appendChild(option);
+      });
+    }
+
+    async function loadPageConfig() {
+      try {
+        const response = await fetch(pageConfigUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to load page config: ${response.status}`);
+        }
+        const data = await response.json();
+        const page = data.ollama || {};
+        document.title = page.page_title || document.title;
+        statusBadge.textContent = page.status_badge || statusBadge.textContent;
+        pageTitle.textContent = page.page_title || pageTitle.textContent;
+        pageDescription.textContent = page.description || pageDescription.textContent;
+        pageNote.textContent = page.note || pageNote.textContent;
+        homeLink.href = page.footer_link || homeLink.href;
+        populateTemplates(page.templates || []);
+      } catch (error) {
+        statusLabel.textContent = `Page config error: ${error.message}`;
+      }
+    }
+
+    async function loadModels() {
+      try {
+        const token = tokenInput.value.trim() || savedToken;
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await fetch('/agents/models', { headers });
+        if (!response.ok) {
+          statusLabel.textContent = `Model list unavailable: ${response.status}. Add a valid token to load models.`;
+          return;
+        }
+        const data = await response.json();
+        modelSelect.innerHTML = '';
+        const models = data.models || [];
+        models.forEach((model) => {
+          const option = document.createElement('option');
+          option.value = model.name;
+          option.textContent = `${model.name} (${model.type})${model.enabled ? '' : ' — disabled'}`;
+          option.disabled = !model.enabled;
+          modelSelect.appendChild(option);
+        });
+        if (!models.length) {
+          statusLabel.textContent = 'No models were returned from the API.';
+          return;
+        }
+        statusLabel.textContent = 'Models loaded. Enter a prompt and submit.';
+      } catch (error) {
+        statusLabel.textContent = `Could not fetch models: ${error.message}`;
+      }
+    }
+
+    async function submitPrompt() {
+      output.textContent = '';
+      const token = tokenInput.value.trim();
+      if (token) {
+        localStorage.setItem('ollama_token', token);
+      }
+      const payload = {
+        prompt: promptInput.value.trim(),
+        model: modelSelect.value,
+      };
+      if (!payload.prompt) {
+        output.textContent = 'Please enter a prompt.';
+        return;
+      }
+
+      submitButton.disabled = true;
+      statusLabel.textContent = 'Sending prompt...';
+
+      try {
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+        const response = await fetch('/agents/ollama', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          output.textContent = JSON.stringify(data, null, 2);
+          statusLabel.textContent = `Request failed: ${response.status}`;
+        } else {
+          output.textContent = data.reply || 'No reply received.';
+          statusLabel.textContent = 'Prompt complete.';
+        }
+      } catch (error) {
+        output.textContent = `Request error: ${error.message}`;
+        statusLabel.textContent = 'Request failed.';
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    function loadTemplate() {
+      const selected = templateSelect.value;
+      if (!selected) {
+        statusLabel.textContent = 'Select a template to load.';
+        return;
+      }
+      promptInput.value = selected;
+      statusLabel.textContent = 'Template loaded. Edit as needed and submit.';
+    }
+
+    loadTemplateButton.addEventListener('click', loadTemplate);
+    submitButton.addEventListener('click', submitPrompt);
+    tokenInput.addEventListener('change', () => {
+      localStorage.setItem('ollama_token', tokenInput.value.trim());
+    });
+
+    loadPageConfig();
+    loadModels();
+  </script>
+</body>
+</html>

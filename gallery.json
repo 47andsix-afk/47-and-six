@@ -1,0 +1,248 @@
+{
+  "categories": [
+    {
+      "id": "real-food",
+      "title": "Real Food Photography",
+      "description": "Authentic plated dishes captured on location.",
+      "items": [
+        {
+          "id": "real-08",
+          "src": "images/plates/IMG_2609.JPG",
+          "alt": "Real food photography 08",
+          "title": "Real Plate 08",
+          "tags": ["real", "restaurant", "portfolio"],
+          "description": "A plated dish from real catering service photography."
+        },
+        {
+          "id": "real-09",
+          "src": "images/plates/IMG_3104.PNG",
+          "alt": "Real food photography 09",
+          "title": "Real Plate 09",
+          "tags": ["real", "chef", "portfolio"],
+          "description": "A colorful plated presentation shot from a real kitchen."
+        }
+      ]
+    },
+    {
+      "id": "captured-plates",
+      "title": "Captured & Portfolio Plates",
+      "description": "Chef portfolio plate photos and working kitchen captures.",
+      "items": [
+        {
+          "id": "portfolio-01",
+          "src": "images/plates/2026-03-13.jpg",
+          "alt": "Captured plate photo 01",
+          "title": "Plate 01",
+          "tags": ["portfolio", "kitchen"],
+          "description": "A plated dish from creative menu development." 
+        },
+        {
+          "id": "portfolio-02",
+          "src": "images/plates/2026-03-13(1).jpg",
+          "alt": "Captured plate photo 02",
+          "title": "Plate 02",
+          "tags": ["portfolio", "experiment"],
+          "description": "A portfolio dish with refined plating techniques."
+        },
+        {
+          "id": "portfolio-03",
+          "src": "images/plates/2026-03-13(10).heic",
+          "alt": "Captured plate photo 03",
+          "title": "Plate 03",
+          "tags": ["portfolio", "composition"],
+          "description": "A high-quality captured plate from a chef portfolio." 
+        },
+        {
+          "id": "portfolio-04",
+          "src": "images/plates/2026-03-13(11).heic",
+          "alt": "Captured plate photo 04",
+          "title": "Plate 04",
+          "tags": ["portfolio", "fine dining"],
+          "description": "An elegant plated presentation from chef documentation." 
+        },
+        {
+          "id": "portfolio-05",
+          "src": "images/plates/2026-03-13(13).heic",
+          "alt": "Captured plate photo 05",
+          "title": "Plate 05",
+          "tags": ["portfolio", "creative"],
+          "description": "Chef portfolio photography emphasizing color and texture." 
+        },
+        {
+          "id": "portfolio-06",
+          "src": "images/plates/2026-03-13(2).heic",
+          "alt": "Captured plate photo 06",
+          "title": "Plate 06",
+          "tags": ["portfolio", "ingredients"],
+          "description": "A plate capture from recipe development and plating trials." 
+        },
+        {
+          "id": "portfolio-07",
+          "src": "images/plates/2026-03-13(2).jpg",
+          "alt": "Captured plate photo 07",
+          "title": "Plate 07",
+          "tags": ["portfolio", "presentation"],
+          "description": "A strong visual plate composition for chef review." 
+        },
+        {
+          "id": "portfolio-08",
+          "src": "images/plates/2026-03-13(3).heic",
+          "alt": "Captured plate photo 08",
+          "title": "Plate 08",
+          "tags": ["portfolio", "details"],
+          "description": "A plated capture that highlights texture and color." 
+        },
+        {
+          "id": "portfolio-10",
+          "src": "images/plates/2026-03-13(4).heic",
+          "alt": "Captured plate photo 10",
+          "title": "Plate 10",
+          "tags": ["portfolio", "composition"],
+          "description": "A captured plate from creative service plating." 
+        },
+        {
+          "id": "portfolio-11",
+          "src": "images/plates/2026-03-13(4).jpg",
+          "alt": "Captured plate photo 11",
+          "title": "Plate 11",
+          "tags": ["portfolio", "menu"],
+          "description": "A plated dish representing the chef's seasonal menu." 
+        },
+        {
+          "id": "portfolio-13",
+          "src": "images/plates/2026-03-13(5).jpg",
+          "alt": "Captured plate photo 13",
+          "title": "Plate 13",
+          "tags": ["portfolio", "detail"],
+          "description": "A detail-focused plate shot from plated dish development." 
+        },
+        {
+          "id": "portfolio-14",
+          "src": "images/plates/2026-03-13(6).heic",
+          "alt": "Captured plate photo 14",
+          "title": "Plate 14",
+          "tags": ["portfolio", "creative"],
+          "description": "A chef plate emphasizing color contrast and structure." 
+        },
+        {
+          "id": "portfolio-15",
+          "src": "images/plates/2026-03-13(7).heic",
+          "alt": "Captured plate photo 15",
+          "title": "Plate 15",
+ "tags": ["portfolio", "artistry"],
+          "description": "A plated dish from creative service plating." 
+        }
+      ]
+    },
+    {
+      "id": "ai-generated",
+      "title": "AI / Generated Plates",
+      "description": "Generated visuals for concept and menu experimentation.",
+      "items": [
+        {
+          "id": "generated-01",
+          "src": "images/plates/Gemini_Generated_Image_1g24t11g24t11g24.png",
+          "alt": "Generated plate photo 01",
+          "title": "Generated Plate 01",
+          "tags": ["ai", "generated", "concept"],
+          "description": "AI-generated plate art used for presentation and ideation." 
+        },
+        {
+          "id": "generated-02",
+          "src": "images/plates/Gemini_Generated_Image_4soeh44soeh44soe.png",
+          "alt": "Generated plate photo 02",
+          "title": "Generated Plate 02",
+          "tags": ["ai", "render", "design"],
+          "description": "A conceptual AI rendering of a plated dish." 
+        },
+        {
+          "id": "generated-03",
+          "src": "images/plates/Gemini_Generated_Image_549d2r549d2r549d.png",
+          "alt": "Generated plate photo 03",
+          "title": "Generated Plate 03",
+          "tags": ["ai", "vision"],
+          "description": "AI-generated concept art for menu inspiration." 
+        },
+        {
+          "id": "generated-04",
+          "src": "images/plates/Gemini_Generated_Image_ebs47kebs47kebs4.png",
+          "alt": "Generated plate photo 04",
+          "title": "Generated Plate 04",
+          "tags": ["ai", "generated"],
+          "description": "A digital plate vision useful for creative brainstorming." 
+        },
+        {
+          "id": "generated-05",
+          "src": "images/plates/Gemini_Generated_Image_geuan8geuan8geua.png",
+          "alt": "Generated plate photo 05",
+          "title": "Generated Plate 05",
+          "tags": ["ai", "design"],
+          "description": "An AI-generated plated concept for future menu exploration." 
+        },
+        {
+          "id": "generated-06",
+          "src": "images/plates/Gemini_Generated_Image_kd33mskd33mskd33.png",
+          "alt": "Generated plate photo 06",
+          "title": "Generated Plate 06",
+          "tags": ["ai", "art"],
+          "description": "A mockup plate image produced by generative AI." 
+        },
+        {
+          "id": "generated-07",
+          "src": "images/plates/Gemini_Generated_Image_sz9p5bsz9p5bsz9p.png",
+          "alt": "Generated plate photo 07",
+          "title": "Generated Plate 07",
+          "tags": ["ai", "render"],
+          "description": "A conceptual plate for visual storytelling." 
+        },
+        {
+          "id": "generated-08",
+          "src": "images/plates/Gemini_Generated_Image_xjikpqxjikpqxjik.png",
+          "alt": "Generated plate photo 08",
+          "title": "Generated Plate 08",
+          "tags": ["ai", "portfolio"],
+          "description": "A generated image for future plating experiments." 
+        }
+      ]
+    },
+    {
+      "id": "screenshots",
+      "title": "Screen Captures",
+      "description": "Behind-the-scenes UI and process screenshots.",
+      "items": [
+        {
+          "id": "screenshot-01",
+          "src": "images/plates/Screenshot 2026-05-19 8.40.02 AM.png",
+          "alt": "Screenshot plate photo 01",
+          "title": "Screenshot 01",
+          "tags": ["screenshot", "ui"],
+          "description": "A screenshot capture of the chef planning dashboard." 
+        },
+        {
+          "id": "screenshot-02",
+          "src": "images/plates/Screenshot 2026-05-19 8.40.18 AM.png",
+          "alt": "Screenshot plate photo 02",
+          "title": "Screenshot 02",
+          "tags": ["screenshot", "workflow"],
+          "description": "A screenshot of operations or menu planning tools." 
+        },
+        {
+          "id": "screenshot-03",
+          "src": "images/plates/Screenshot 2026-05-19 8.41.28 AM.png",
+          "alt": "Screenshot plate photo 03",
+          "title": "Screenshot 03",
+          "tags": ["screenshot", "dashboard"],
+          "description": "A capture showing part of the chef's digital workflow." 
+        },
+        {
+          "id": "screenshot-04",
+          "src": "images/plates/Screenshot 2026-05-19 8.41.37 AM.png",
+          "alt": "Screenshot plate photo 04",
+          "title": "Screenshot 04",
+          "tags": ["screenshot", "operations"],
+          "description": "A screenshot demonstrating kitchen or portal planning." 
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Knife Skills 101",
+    "description": "Fundamentals of safe, efficient knife work for every service.",
+    "price": 65,
+    "tags": ["beginner", "technique", "prep"]
+  },
+  {
+    "name": "Sauce Foundations",
+    "description": "Build mother sauces, reductions, and emulsions for plated execution.",
+    "price": 85,
+    "tags": ["intermediate", "classic", "sauce"]
+  },
+  {
+    "name": "Modern Plating Lab",
+    "description": "Develop composition, texture contrast, and visual story for chef-style plates.",
+    "price": 95,
+    "tags": ["advanced", "plating", "presentation"]
+  }
+]

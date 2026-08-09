@@ -5,192 +5,165 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>47-&-SIX // Culinary Architecture</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="/static/favicon.ico">
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="description" content="47-SIX Culinary Architecture — AI-powered chef intelligence suite.">
+  <meta name="keywords" content="chef, culinary, AI, menu, workflow, kitchen ops">
+  <meta property="og:title" content="47-SIX Culinary Architecture">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="http://127.0.0.1/">
+  <meta property="og:image" content="/static/fallback.jpg">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="brand">47-&-SIX</div>
-    <div class="nav-links">
-      <a href="#hero">[00] OVERVIEW</a>
-      <a href="#foundations">[01] FOUNDATIONS</a>
-      <a href="#sourcing">[02] MENU MATRIX</a>
-      <a href="#metrics">[03] ECONOMICS</a>
-      <a href="#portal">[04] CLIENT PORTAL</a>
-      <a href="#operations">[05] OPERATIONS</a>
-      <a href="#services">[06] SERVICES</a>
-      <a href="class_menu.html">[07] CLASS MENU</a>
-      <a href="#contact">[08] CONTACT</a>
-      <a href="pic.html">[09] PICS</a>
-    </div>
-  </nav>
+  <div id="nav"></div>
 
-  <section id="hero" class="hero-section">
-    <div class="hero-content">
-      <div class="status-badge">STATUS: ONLINE // ACCEPTING COMMISSIONS</div>
-      <h1>PRECISION CULINARY OPERATIONS</h1>
-      <p class="hero-subtext">30 Years of Mastery. 6-Minute Execution. Private chef and catering service engineered for disciplined hospitality.</p>
-    </div>
-  </section>
+  <main class="page-main">
+    <section id="hero" class="hero-section"></section>
+    <div id="site-sections"></div>
+  </main>
 
-  <section id="foundations" class="content-section">
-    <h2>01 // FOUNDATIONS & DISCIPLINE</h2>
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-tag">CU101</div>
-        <h3>Core Architecture</h3>
-        <p>Classical foundations translated into high-velocity production. Technique is the bedrock of efficiency, stripping away operational fluff to leave only precision execution.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">CU122</div>
-        <h3>Precision Patisserie</h3>
-        <p>Baking demands exact chemical constraints. We apply this strict, zero-tolerance approach to every layer of the 47-&-SIX kitchen.</p>
-      </div>
-    </div>
-  </section>
+  <div id="footer"></div>
 
-  <section id="sourcing" class="content-section">
-    <h2>02 // SOURCING & MENU MATRIX</h2>
-    <div class="grid-3">
-      <div class="card">
-        <div class="card-tag">CU222</div>
-        <h3>Farm to Table</h3>
-        <p>Hyper-local supply chain integration. Direct sourcing optimizes flavor profiles and protects operational margins.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">CU132</div>
-        <h3>World Cuisines</h3>
-        <p>Global flavor profiles engineered for modular deployment across catering and elite personal chef formats.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">CE187</div>
-        <h3>Menu Management</h3>
-        <p>Menus built as scalable algorithms, maximizing profitability while seamlessly adapting to client dietary specifications.</p>
-      </div>
-    </div>
-  </section>
+  <script>
+    fetch('/static/components/nav.html')
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById('nav').innerHTML = html;
+        const toggle = document.getElementById('dark-toggle');
+        if (toggle) toggle.onclick = () => document.body.classList.toggle('dark');
+      })
+      .then(() => loadSiteData())
+      .catch(() => loadSiteData());
 
-  <section id="metrics" class="content-section">
-    <h2>03 // THE SIX-MINUTE ECONOMY</h2>
-    <div class="card terminal-card">
-      <div class="card-tag">CE167</div>
-      <h3>Cost Control & Purchasing Engine</h3>
-      <p>The 6-Minute Clock Cycle is our financial heartbeat. By locking production into rigid intervals, we eliminate operational drift, optimize purchasing yields, and maintain aggressive food cost controls. This is how quality scales without bleeding margin.</p>
-      <div class="progress-container">
-        <div class="progress-label">OPERATIONAL EFFICIENCY RATING</div>
-        <div class="progress-bar-bg"><div class="progress-bar" id="efficiency-bar"></div></div>
-      </div>
-    </div>
-  </section>
+    fetch('/static/components/footer.html')
+      .then(r => r.text())
+      .then(html => document.getElementById('footer').innerHTML = html);
+  </script>
 
-  <section id="portal" class="content-section">
-    <h2>04 // CLIENT PORTAL</h2>
-    <p><strong>CE160: Culinary Entrepreneurship</strong> deployment. Client-facing information stays here; private planning tools live behind authenticated portal access.</p>
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-tag">PUBLIC</div>
-        <h3>Service Overview</h3>
-        <p>Clients can review the culinary philosophy, production standards, and service range without seeing the internal operator workflow.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">PORTAL</div>
-        <h3>Private Access</h3>
-        <p>Use the secure login to reach the private portal for dashboard, menu, inventory, event planning, and console tools.</p>
-        <a class="card-link" href="login.html?next=portal.html">Enter client portal</a>
-      </div>
-    </div>
-  </section>
+  <script>
+    const siteDataUrl = '/site_data.json';
+    let navLinksEl = document.querySelector('.nav-links');
+    const heroEl = document.getElementById('hero');
+    const sectionsContainer = document.getElementById('site-sections');
 
-  <section id="operations" class="content-section">
-    <h2>05 // OPERATIONS & SPECIALIZATIONS</h2>
-    
-    <div class="grid-2">
-        
-        <!-- Family Dining Card -->
-        <div class="card">
-            <img src="images/private-dining.png" alt="47 & SIX Family Dining" style="width: 100%; height: auto; border-radius: var(--radius-md); margin-bottom: 16px; border: 1px solid var(--border);">
-            <h3>Private Specialization</h3>
-            <p>Bringing the uncompromising standards of the 47 & SIX kitchen directly to the family table. Precision execution, intimate setting.</p>
-        </div>
+    function createNode(tag, attrs = {}, content = '') {
+      const node = document.createElement(tag);
+      Object.entries(attrs).forEach(([key, value]) => {
+        if (key === 'class') {
+          node.className = value;
+        } else if (key === 'href') {
+          node.setAttribute('href', value);
+        } else if (key === 'src') {
+          node.setAttribute('src', value);
+        } else if (key === 'alt') {
+          node.setAttribute('alt', value);
+        } else {
+          node[key] = value;
+        }
+      });
+      if (typeof content === 'string') {
+        node.textContent = content;
+      } else if (content instanceof Node) {
+        node.appendChild(content);
+      }
+      return node;
+    }
 
-        <!-- Mobile Stand Card -->
-        <div class="card">
-            <img src="images/precision-fuel.png" alt="47 & SIX Precision Fuel Stand" style="width: 100%; height: auto; border-radius: var(--radius-md); margin-bottom: 16px; border: 1px solid var(--border);">
-            <h3>Precision Fuel</h3>
-            <p>Tacos, Burgers, and mobile culinary operations. Delivering high-impact flavors with strict, zero-tolerance discipline.</p>
-        </div>
+    function renderNav(links) {
+      navLinksEl = document.querySelector('.nav-links');
+      if (!navLinksEl) return;
+      navLinksEl.innerHTML = '';
+      links.forEach((link) => {
+        const anchor = createNode('a', { href: link.href }, link.label);
+        navLinksEl.appendChild(anchor);
+      });
+    }
 
-    </div>
-  </section>
+    function renderHero(hero) {
+      heroEl.innerHTML = '';
+      const content = createNode('div', { class: 'hero-content' });
+      content.appendChild(createNode('div', { class: 'status-badge' }, hero.status));
+      content.appendChild(createNode('h1', {}, hero.title));
+      content.appendChild(createNode('p', { class: 'hero-subtext' }, hero.subtext));
+      heroEl.appendChild(content);
+    }
 
-  <section id="services" class="content-section">
-    <h2>06 // SERVICES & PACKAGES</h2>
-    <div class="grid-3">
-      <div class="card">
-        <div class="card-tag">SERVICE</div>
-        <h3>Private Dining</h3>
-        <p>Curated in-home and on-site chef experiences built around guest count, service pacing, and elevated presentation.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">SERVICE</div>
-        <h3>Event Catering</h3>
-        <p>Professional event menus for weddings, corporate dinners, and special occasions with structured timelines and staffing plans.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">SERVICE</div>
-        <h3>Menu Consultation</h3>
-        <p>Menu direction, costing, and ingredient planning for clients who need clear options before committing to service.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">PORTFOLIO</div>
-        <h3>Class Menu + Plates</h3>
-        <p>Review the CU222 class dishes and plated examples as part of the chef training portfolio.</p>
-        <a class="card-link" href="class_menu.html">Open class menu</a>
-      </div>
-    </div>
-  </section>
+    function createButtonLink(card) {
+      if (!card.link_text || !card.link_href) return null;
+      const link = createNode('a', { class: 'card-link', href: card.link_href }, card.link_text);
+      return link;
+    }
 
-  <section id="process" class="content-section">
-    <h2>07 // PROCESS</h2>
-    <div class="grid-3">
-      <div class="card">
-        <div class="card-tag">STEP 1</div>
-        <h3>Inquiry</h3>
-        <p>Start with a quick description of your event, guest count, and any dietary needs or constraints.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">STEP 2</div>
-        <h3>Planning</h3>
-        <p>Review menu direction, staffing assumptions, and service logistics before anything is finalized.</p>
-      </div>
-      <div class="card">
-        <div class="card-tag">STEP 3</div>
-        <h3>Execution</h3>
-        <p>Confirm the service window, prepare the kitchen flow, and deliver a polished dining experience.</p>
-      </div>
-    </div>
-  </section>
+    function renderCard(card) {
+      const container = createNode('div', { class: 'card' });
+      if (card.img_src) {
+        const img = createNode('img', { src: card.img_src, alt: card.img_alt || card.title });
+        container.appendChild(img);
+      }
+      if (card.tag) {
+        container.appendChild(createNode('div', { class: 'card-tag' }, card.tag));
+      }
+      container.appendChild(createNode('h3', {}, card.title));
+      container.appendChild(createNode('p', {}, card.description));
+      const link = createButtonLink(card);
+      if (link) container.appendChild(link);
+      return container;
+    }
 
-  <section id="contact" class="content-section">
-    <h2>08 // BOOKING & CONTACT</h2>
-    <div class="grid-2">
-      <div class="card terminal-card">
-        <div class="card-tag">BOOKING</div>
-        <h3>Request a Consultation</h3>
-        <p>Send a concise request with your event date, location, guest count, and service style. Use the portal for internal planning, or contact directly for client intake.</p>
-        <a class="card-link" href="mailto:hello@47andsix.com?subject=47-%26-SIX%20Booking%20Inquiry">Email the chef</a>
-      </div>
-      <div class="card">
-        <div class="card-tag">DETAILS</div>
-        <h3>Service Area</h3>
-        <p>El Paso, TX and surrounding regional service radius.</p>
-        <p style="margin-top: 12px; color: var(--text-muted);">For private access: <a class="card-link" href="login.html?next=portal.html">Sign in to the portal</a></p>
-      </div>
-    </div>
-  </section>
+    function renderSection(section) {
+      const sectionEl = createNode('section', { class: 'content-section', id: section.id });
+      sectionEl.appendChild(createNode('h2', {}, section.title));
+      if (section.intro) {
+        const intro = createNode('p', { class: 'hero-subtext' }, section.intro);
+        sectionEl.appendChild(intro);
+      }
 
-  <footer>
-    <div class="brand">47-&-SIX</div>
-    <p>EL PASO, TX // REGIONAL OPERATIONAL RADIUS ACTIVE</p>
-    <div class="small-text">PUBLIC SITE FOR CLIENTS // AUTHENTICATED PORTAL FOR INTERNAL OPERATIONS</div>
-  </footer>
+      if (section.type === 'featured' && section.cards?.length) {
+        const cardData = section.cards[0];
+        const card = createNode('div', { class: 'card terminal-card' });
+        if (card.tag) card.appendChild(createNode('div', { class: 'card-tag' }, card.tag));
+        card.appendChild(createNode('h3', {}, card.title));
+        card.appendChild(createNode('p', {}, card.description));
+        if (card.progress_label) {
+          const progress = createNode('div', { class: 'progress-container' });
+          progress.appendChild(createNode('div', { class: 'progress-label' }, card.progress_label));
+          const barBg = createNode('div', { class: 'progress-bar-bg' });
+          const bar = createNode('div', { class: 'progress-bar' });
+          if (typeof card.progress_value === 'number') {
+            bar.style.width = `${Math.min(100, Math.max(0, card.progress_value))}%`;
+          }
+          barBg.appendChild(bar);
+          progress.appendChild(barBg);
+          card.appendChild(progress);
+        }
+        sectionEl.appendChild(card);
+        return sectionEl;
+      }
+
+      const grid = createNode('div', { class: section.type || 'grid-3' });
+      (section.cards || []).forEach((card) => grid.appendChild(renderCard(card)));
+      sectionEl.appendChild(grid);
+      return sectionEl;
+    }
+
+    async function loadSiteData() {
+      try {
+        const response = await fetch(siteDataUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to load site data: ${response.status}`);
+        }
+        const data = await response.json();
+        renderNav(data.nav_links || []);
+        renderHero(data.index.hero || {});
+        sectionsContainer.innerHTML = '';
+        (data.index.sections || []).forEach((section) => {
+          sectionsContainer.appendChild(renderSection(section));
+        });
+      } catch (error) {
+        document.body.innerHTML = `<main class="page-main"><section class="content-section"><h2>Site data load failed</h2><p>${error.message}</p></section></main>`;
+      }
+    }
+
+  </script>
 </body>
 </html>

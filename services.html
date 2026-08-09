@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>47-&-SIX // Services</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="page-main">
+    <section class="content-section">
+      <h1>Chef Services</h1>
+      <p>Explore services for private dining, catering, consulting, and kitchen workflow optimization.</p>
+      <div id="services-container" class="service-grid"></div>
+    </section>
+  </main>
+  <div id="footer"></div>
+
+  <script>
+    fetch('/static/components/nav.html')
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById('nav').innerHTML = html;
+        const toggle = document.getElementById('dark-toggle');
+        if (toggle) toggle.onclick = () => document.body.classList.toggle('dark');
+      });
+
+    fetch('/static/components/footer.html')
+      .then(r => r.text())
+      .then(html => document.getElementById('footer').innerHTML = html);
+  </script>
+
+  <script>
+    fetch('/services')
+      .then(r => r.json())
+      .then(services => {
+        const container = document.getElementById('services-container');
+        if (!services.length) {
+          container.innerHTML = '<p>No services available.</p>';
+          return;
+        }
+        services.forEach(s => {
+          const card = document.createElement('div');
+          card.className = 'service-card';
+          card.innerHTML = `
+            <h3>${s.name}</h3>
+            <p>${s.summary}</p>
+            <span class="category">${s.category}</span>
+          `;
+          container.appendChild(card);
+        });
+      })
+      .catch(() => {
+        document.getElementById('services-container').innerHTML = '<p>Error loading services.</p>';
+      });
+  </script>
+</body>
+</html>

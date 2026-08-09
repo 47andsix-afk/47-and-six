@@ -1,0 +1,23 @@
+[
+  {
+    "project": "Nordic Tasting Menu",
+    "image": "images/portfolio/nordic-menu.jpg",
+    "role": "Chef",
+    "date": "2025",
+    "notes": "Seasonal, minimal, ingredient-forward service built for a private tasting experience."
+  },
+  {
+    "project": "Modern Tex-Mex Roster",
+    "image": "images/portfolio/texmex.jpg",
+    "role": "Creative Director",
+    "date": "2026",
+    "notes": "Bold flavor compositions for a fast-casual chef-driven event."
+  },
+  {
+    "project": "Private Chef Table",
+    "image": "images/portfolio/private-table.jpg",
+    "role": "Lead Chef",
+    "date": "2026",
+    "notes": "High-touch service with plated course sequence and modern hospitality flow."
+  }
+]

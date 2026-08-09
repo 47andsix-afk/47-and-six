@@ -1,0 +1,30 @@
+{
+  "hero": {
+    "title": "47-SIX Chef Intelligence",
+    "subtitle": "Plates, systems, and AI for modern kitchens.",
+    "cta": [
+      { "label": "View Plate Gallery", "href": "/pic.html" },
+      { "label": "Chef Services", "href": "/services.html" }
+    ]
+  },
+  "sections": [
+    {
+      "id": "gallery",
+      "title": "Plate Gallery",
+      "description": "A curated chef portfolio of plated work and visual stories.",
+      "href": "/pic.html"
+    },
+    {
+      "id": "classes",
+      "title": "Classes & Menus",
+      "description": "A scalable menu system for training, catering, and private chef execution.",
+      "href": "/class_menu.html"
+    },
+    {
+      "id": "ai",
+      "title": "AI Chef Intelligence",
+      "description": "Local model prompts, operational insights, and smart menu direction powered by your node.",
+      "href": "/ollama.html"
+    }
+  ]
+}
